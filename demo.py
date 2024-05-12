@@ -1,15 +1,16 @@
 import os
-import hydra
 
+import hydra
 import torch
 import torchaudio
 import torchvision
-from datamodule.transforms import AudioTransform, VideoTransform
+
 from datamodule.av_dataset import cut_or_pad
+from datamodule.transforms import AudioTransform, VideoTransform
 
 
 class InferencePipeline(torch.nn.Module):
-    def __init__(self, cfg, detector="retinaface"):
+    def __init__(self, cfg, detector="mediapipe"):
         super(InferencePipeline, self).__init__()
         self.modality = cfg.data.modality
         if self.modality in ["audio", "audiovisual"]:
@@ -49,10 +50,14 @@ class InferencePipeline(torch.nn.Module):
         if self.modality in ["video", "audiovisual"]:
             video = self.load_video(data_filename)
             landmarks = self.landmarks_detector(video)
+            print("Got the video landmarks")
             video = self.video_process(video, landmarks)
+            print("Pre-processed the video using the landmarks")
             video = torch.tensor(video)
             video = video.permute((0, 3, 1, 2))
+            print(f"shape of video = {video.shape}")
             video = self.video_transform(video)
+            print("Transformed the input video")
 
         if self.modality == "video":
             with torch.no_grad():
