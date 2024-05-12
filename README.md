@@ -148,6 +148,8 @@ python demo.py  data.modality=[modality] \
 
 </details>
 
+You can also run auto-avsr lip-reading demo using Colab: [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1JPyLN00qZU-6wn1UrMfDJiFgL5X-xMwu#scrollTo=I0vL6GdrHYGy)
+
 
 ## Model zoo
 
