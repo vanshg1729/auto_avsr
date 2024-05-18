@@ -8,6 +8,7 @@ import torchvision
 from datamodule.av_dataset import cut_or_pad
 from datamodule.transforms import AudioTransform, VideoTransform
 
+device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
 class InferencePipeline(torch.nn.Module):
     def __init__(self, cfg, detector="mediapipe"):
@@ -61,6 +62,7 @@ class InferencePipeline(torch.nn.Module):
 
         if self.modality == "video":
             with torch.no_grad():
+                self.modelmodule = self.modelmodule.to(device)
                 transcript = self.modelmodule(video)
         elif self.modality == "audio":
             with torch.no_grad():
