@@ -1,13 +1,13 @@
 import torch
 import torchaudio
+from pytorch_lightning import LightningModule
+
 from cosine import WarmupCosineScheduler
 from datamodule.transforms import TextTransform
-
-from pytorch_lightning import LightningModule
 from espnet.nets.batch_beam_search import BatchBeamSearch
 from espnet.nets.pytorch_backend.e2e_asr_conformer import E2E
-from espnet.nets.scorers.length_bonus import LengthBonus
 from espnet.nets.scorers.ctc import CTCPrefixScorer
+from espnet.nets.scorers.length_bonus import LengthBonus
 
 
 def compute_word_level_distance(seq1, seq2):
@@ -47,11 +47,26 @@ class ModelModule(LightningModule):
         return [optimizer], [scheduler]
 
     def forward(self, sample):
+        """
+        sample : (B, 1, T, 88, 88)
+        """
+        print(f"self.device = {self.device}")
+        print(f"sample.shape = {sample.shape}")
         self.beam_search = get_beam_search_decoder(self.model, self.token_list)
         enc_feat, _ = self.model.encoder(sample.unsqueeze(0).to(self.device), None)
-        enc_feat = enc_feat.squeeze(0)
+        print(f"enc_feat.shape = {enc_feat.shape}")
+        enc_feat = enc_feat.squeeze(0) # (B, T, C)
+        print(f"After squeeze: enc_feat.shape = {enc_feat.shape}")
 
         nbest_hyps = self.beam_search(enc_feat)
+        print(f"\ntype of nbest_hyps: {type(nbest_hyps)}, {len(nbest_hyps)}, {type(nbest_hyps[0])}")
+        temp = nbest_hyps[0].asdict()
+        print(temp.keys())
+        print(f"\nscore : {temp['score']}")
+        print(f"scores: {temp['scores']}")
+        print(f"yseq: {temp['yseq']}")
+        print(f"states: {len(temp['states']['decoder'])}")
+        # print(f"{nbest_hyps[0].asdict()['score']}")
         nbest_hyps = [h.asdict() for h in nbest_hyps[: min(len(nbest_hyps), 1)]]
         predicted_token_id = torch.tensor(list(map(int, nbest_hyps[0]["yseq"][1:])))
         predicted = self.text_transform.post_process(predicted_token_id).replace("<eos>", "")
