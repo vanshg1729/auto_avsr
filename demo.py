@@ -58,7 +58,8 @@ class InferencePipeline(torch.nn.Module):
             video = video.permute((0, 3, 1, 2))
             print(f"shape of video = {video.shape}")
             video = self.video_transform(video)
-            print("Transformed the input video")
+            # video = video[::2]
+            print(f"Transformed the input video: {video.shape}")
 
         if self.modality == "video":
             with torch.no_grad():
