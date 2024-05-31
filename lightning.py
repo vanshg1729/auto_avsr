@@ -89,9 +89,16 @@ class ModelModule(LightningModule):
 
         token_id = sample["target"]
         actual = self.text_transform.post_process(token_id)
+        print(f"\n{'*' * 70}")
+        print(f"{sample_idx} GT: {actual}")
+        print(f"{sample_idx} Pred: {predicted}")
 
-        self.total_edit_distance += compute_word_level_distance(actual, predicted)
+        word_distance = compute_word_level_distance(actual, predicted)
+        print(f"{sample_idx} dist = {word_distance}, len: {len(actual.split())}")
+        print(f"{sample_idx} WER: {word_distance/len(actual.split())}")
+        self.total_edit_distance += word_distance
         self.total_length += len(actual.split())
+        print(f"{'*' * 70}")
         return
 
     def _step(self, batch, batch_idx, step_type):

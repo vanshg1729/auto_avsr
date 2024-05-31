@@ -1,4 +1,7 @@
 import os
+import numpy as np
+import cv2
+import imageio
 
 import torchaudio
 import torchvision
@@ -82,7 +85,7 @@ def save_vid_aud_txt(
 ):
     # -- save video
     if dst_vid_filename is not None:
-        save2vid(dst_vid_filename, trim_vid_data, video_fps)
+        save2vid_opencv(dst_vid_filename, trim_vid_data, video_fps)
     # -- save audio
     if dst_aud_filename is not None:
         save2aud(dst_aud_filename, trim_aud_data, audio_sample_rate)
@@ -92,6 +95,29 @@ def save_vid_aud_txt(
     f.write(f"{content}")
     f.close()
 
+def save2vid_imageio(filename, vid, fps):
+    print(filename, fps)
+    vid = vid.numpy().astype(np.uint8)
+    writer = imageio.get_writer(filename, fps)
+    for frame in vid:
+        writer.append_data(frame)
+    writer.close()
+
+def save2vid_opencv(filename, vid, fps):
+    os.makedirs(os.path.dirname(filename), exist_ok=True)
+    vid = vid.numpy().astype(np.uint8)
+    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+    T, H, W, C = vid.shape
+    frame_size = (W, H)
+    parent_dir = os.path.dirname(filename)
+    out = cv2.VideoWriter(filename, fourcc, fps, frame_size)
+
+    for i, frame in enumerate(vid):
+        frame_bgr = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
+        # cv2.imwrite(f"./images/{i}.png", frame_bgr)
+        out.write(frame_bgr)
+
+    out.release()
 
 def save2vid(filename, vid, frames_per_second):
     os.makedirs(os.path.dirname(filename), exist_ok=True)

@@ -5,7 +5,7 @@ from pytorch_lightning import LightningDataModule
 
 from .av_dataset import AVDataset
 from .samplers import (
-    ByFrameCountSampler,
+    # ByFrameCountSampler,
     DistributedSamplerWrapper,
     RandomSamplerWrapper,
 )
@@ -75,7 +75,7 @@ class DataModule(LightningDataModule):
             audio_transform=AudioTransform("train"),
             video_transform=VideoTransform("train"),
         )
-        sampler = ByFrameCountSampler(train_ds, self.cfg.data.max_frames)
+        # sampler = ByFrameCountSampler(train_ds, self.cfg.data.max_frames)
         if self.total_gpus > 1:
             sampler = DistributedSamplerWrapper(sampler)
         else:
@@ -92,9 +92,9 @@ class DataModule(LightningDataModule):
             audio_transform=AudioTransform("val"),
             video_transform=VideoTransform("val"),
         )
-        sampler = ByFrameCountSampler(
-            val_ds, self.cfg.data.max_frames_val, shuffle=False
-        )
+        # sampler = ByFrameCountSampler(
+        #     val_ds, self.cfg.data.max_frames_val, shuffle=False
+        # )
         if self.total_gpus > 1:
             sampler = DistributedSamplerWrapper(sampler, shuffle=False, drop_last=True)
         return self._dataloader(val_ds, sampler, collate_pad)
@@ -111,5 +111,5 @@ class DataModule(LightningDataModule):
             ),
             video_transform=VideoTransform("test"),
         )
-        dataloader = torch.utils.data.DataLoader(dataset, batch_size=None)
+        dataloader = torch.utils.data.DataLoader(dataset, batch_size=None, num_workers=4)
         return dataloader
