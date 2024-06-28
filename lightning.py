@@ -9,7 +9,6 @@ from espnet.nets.pytorch_backend.e2e_asr_conformer import E2E
 from espnet.nets.scorers.ctc import CTCPrefixScorer
 from espnet.nets.scorers.length_bonus import LengthBonus
 
-
 def compute_word_level_distance(seq1, seq2):
     return torchaudio.functional.edit_distance(seq1.lower().split(), seq2.lower().split())
 
@@ -50,22 +49,22 @@ class ModelModule(LightningModule):
         """
         sample : (B, 1, T, 88, 88)
         """
-        print(f"self.device = {self.device}")
-        print(f"sample.shape = {sample.shape}")
+        # print(f"self.device = {self.device}")
+        # print(f"sample.shape = {sample.shape}")
         self.beam_search = get_beam_search_decoder(self.model, self.token_list)
         enc_feat, _ = self.model.encoder(sample.unsqueeze(0).to(self.device), None)
-        print(f"enc_feat.shape = {enc_feat.shape}")
+        # print(f"enc_feat.shape = {enc_feat.shape}")
         enc_feat = enc_feat.squeeze(0) # (B, T, C)
-        print(f"After squeeze: enc_feat.shape = {enc_feat.shape}")
+        # print(f"After squeeze: enc_feat.shape = {enc_feat.shape}")
 
         nbest_hyps = self.beam_search(enc_feat)
-        print(f"\ntype of nbest_hyps: {type(nbest_hyps)}, {len(nbest_hyps)}, {type(nbest_hyps[0])}")
+        # print(f"\ntype of nbest_hyps: {type(nbest_hyps)}, {len(nbest_hyps)}, {type(nbest_hyps[0])}")
         temp = nbest_hyps[0].asdict()
-        print(temp.keys())
-        print(f"\nscore : {temp['score']}")
-        print(f"scores: {temp['scores']}")
-        print(f"yseq: {temp['yseq']}")
-        print(f"states: {len(temp['states']['decoder'])}")
+        # print(temp.keys())
+        # print(f"\nscore : {temp['score']}")
+        # print(f"scores: {temp['scores']}")
+        # print(f"yseq: {temp['yseq']}")
+        # print(f"states: {len(temp['states']['decoder'])}")
         # print(f"{nbest_hyps[0].asdict()['score']}")
         nbest_hyps = [h.asdict() for h in nbest_hyps[: min(len(nbest_hyps), 1)]]
         predicted_token_id = torch.tensor(list(map(int, nbest_hyps[0]["yseq"][1:])))
@@ -89,16 +88,18 @@ class ModelModule(LightningModule):
 
         token_id = sample["target"]
         actual = self.text_transform.post_process(token_id)
-        print(f"\n{'*' * 70}")
-        print(f"{sample_idx} GT: {actual}")
-        print(f"{sample_idx} Pred: {predicted}")
-
         word_distance = compute_word_level_distance(actual, predicted)
-        print(f"{sample_idx} dist = {word_distance}, len: {len(actual.split())}")
-        print(f"{sample_idx} WER: {word_distance/len(actual.split())}")
+
+        if self.cfg.verbose:
+            print(f"\n{'*' * 70}")
+            print(f"{sample_idx} GT: {actual}")
+            print(f"{sample_idx} Pred: {predicted}")
+
+            print(f"{sample_idx} dist = {word_distance}, len: {len(actual.split())}")
+            print(f"{sample_idx} WER: {word_distance/len(actual.split())}")
+            print(f"{'*' * 70}")
         self.total_edit_distance += word_distance
         self.total_length += len(actual.split())
-        print(f"{'*' * 70}")
         return
 
     def _step(self, batch, batch_idx, step_type):
@@ -122,9 +123,9 @@ class ModelModule(LightningModule):
         return loss
 
     def on_train_epoch_start(self):
-        sampler = self.trainer.train_dataloader.loaders.batch_sampler
-        if hasattr(sampler, "set_epoch"):
-            sampler.set_epoch(self.current_epoch)
+        # sampler = self.trainer.train_dataloader.loaders.batch_sampler
+        # if hasattr(sampler, "set_epoch"):
+        #     sampler.set_epoch(self.current_epoch)
         return super().on_train_epoch_start()
 
     def on_test_epoch_start(self):

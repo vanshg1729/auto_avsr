@@ -7,6 +7,8 @@
 import torch
 import torchaudio
 import torchvision
+import cv2
+import numpy as np
 
 
 class AVSRDataLoader:
@@ -47,7 +49,22 @@ class AVSRDataLoader:
         return waveform, sample_rate
 
     def load_video(self, data_filename):
-        return torchvision.io.read_video(data_filename, pts_unit="sec")[0].numpy()
+        cap = cv2.VideoCapture(data_filename)
+        frames = []
+        while cap.isOpened():
+            ret, frame = cap.read()
+            if not ret:
+                break
+            frames.append(frame)
+        cap.release()
+        frames = np.array(frames)
+        return frames
+
+    # def load_video(self, data_filename):
+    #     """
+    #     NOTE: There is some issue with torchvision.io.read_video and it doesn't read the entire video
+    #     """
+    #     return torchvision.io.read_video(data_filename, pts_unit="sec")[0].numpy()
 
     def audio_process(self, waveform, sample_rate, target_sample_rate=16000):
         if sample_rate != target_sample_rate:

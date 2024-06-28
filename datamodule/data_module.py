@@ -111,5 +111,5 @@ class DataModule(LightningDataModule):
             ),
             video_transform=VideoTransform("test"),
         )
-        dataloader = torch.utils.data.DataLoader(dataset, batch_size=None, num_workers=4)
+        dataloader = torch.utils.data.DataLoader(dataset, batch_size=None, num_workers=8)
         return dataloader
