@@ -1,4 +1,7 @@
 import os
+import json
+import glob
+import csv
 
 import hydra
 import torch
@@ -50,17 +53,17 @@ class InferencePipeline(torch.nn.Module):
 
         if self.modality in ["video", "audiovisual"]:
             video = self.load_video(data_filename)
-            landmarks = self.landmarks_detector(video)
-            print("Got the video landmarks")
-            video = self.video_process(video, landmarks)
-            print("Pre-processed the video using the landmarks")
+            # landmarks = self.landmarks_detector(video)
+            # print(f"Got the video landmarks: {type(landmarks)}, {len(landmarks)}")
+            # print(f"type of landmarks[0]: {type(landmarks[0])}, {landmarks[0].shape}")
+            # video = self.video_process(video, landmarks)
+            # print("Pre-processed the video using the landmarks")
             video = torch.tensor(video)
             video = video.permute((0, 3, 1, 2))
             print(f"shape of video = {video.shape}")
             video = self.video_transform(video)
             # video = video[::2]
             print(f"Transformed the input video: {video.shape}")
-
         if self.modality == "video":
             with torch.no_grad():
                 self.modelmodule = self.modelmodule.to(device)
@@ -99,13 +102,202 @@ class InferencePipeline(torch.nn.Module):
         waveform = torch.mean(waveform, dim=0, keepdim=True)
         return waveform
 
+def compute_word_level_distance(seq1, seq2):
+    return torchaudio.functional.edit_distance(seq1.lower().split(), seq2.lower().split())
+
+def get_gt_text(video_file_path):
+    """
+    Gets the Ground truth for GRID
+    """
+    dir_path = "/ssd_scratch/cvit/vanshg/gridcorpus/transcription/s1"
+    fname = os.path.basename(video_file_path).split('.')[0]
+    text_fpath = os.path.join(dir_path, f"{fname}.align")
+    words = []
+    with open(text_fpath, "r") as file:
+       for line in file:
+           parts = line.split()
+           if len(parts) == 3 and parts[2] != 'sil':
+               words.append(parts[2])
+    return ' '.join(words).upper()
+
+def write_row_to_csv(filename, row):
+    with open(filename, mode='a', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerow(row)
 
 @hydra.main(version_base="1.3", config_path="configs", config_name="config")
 def main(cfg):
     pipeline = InferencePipeline(cfg)
+    # gt_transcript = get_gt_text(cfg.file_path)
+    gt_transcript = "i need my medication"
+    print(f"Ground Truth Transcript: {gt_transcript}")
     transcript = pipeline(cfg.file_path)
     print(f"transcript: {transcript}")
+    wer = compute_word_level_distance(gt_transcript, transcript)/len(gt_transcript.split())
+    print(f"WER: {wer}")
 
+@hydra.main(version_base="1.3", config_path="configs", config_name="config")
+def infer_wildvsr(cfg):
+    pipeline = InferencePipeline(cfg)
+    f = open('./WildVSR/labels.json', 'r')
+    video_dict = json.load(f)
+    word_distance = 0
+    total_length = 0
+    for i, (vid_fname, gt_text) in enumerate(video_dict.items()):
+        video_path = f"./WildVSR/videos/{vid_fname}"
+        transcript = pipeline(video_path)
+        word_distance += compute_word_level_distance(gt_text, transcript)
+        total_length += len(gt_text.split())
+        print(f"{i} WER: {word_distance/total_length}")
+    
+@hydra.main(version_base="1.3", config_path="configs", config_name="config")
+def infer_phrases(cfg):
+    pipeline = InferencePipeline(cfg)
+    print(f"Got the inference pipeline")
+    phrases_dir = "/ssd_scratch/cvit/vanshg/vansh_phrases/preprocessed_phrases/videos"
+    # phrases_dir = "/ssd_scratch/cvit/vanshg/vansh_phrases/videos"
+    assert os.path.exists(phrases_dir), f"Phrases dir: '{phrases_dir}' doesn't exists"
+    print(f"Phrases DIR: {phrases_dir}")
+    label_file = "/ssd_scratch/cvit/vanshg/vansh_phrases/test_phrases_30.json"
+    print(f"Label file: {label_file}")
+    f = open(label_file, 'r')
+    video_list = json.load(f)
+    print(f"Total number of videos: {len(video_list)}")
+
+    csv_filepath = os.path.join(phrases_dir, "results_test_30.csv")
+    csv_fp = open(csv_filepath, "w", newline='')
+    writer = csv.writer(csv_fp, delimiter=',')
+    row_names = [
+        "Filepath",
+        "Ground Truth Text",
+        "Predicted Text",
+        "Length",
+        "Word Distance",
+        "WER",
+        "Total Length",
+        "Total Word Distance",
+        "Final WER"
+    ]
+    writer.writerow(row_names)
+    print(f"Wrote the first row")
+    # write_row_to_csv(csv_filepath, row_names)
+
+    total_word_distance = 0
+    total_length = 0
+    for i, video_data in enumerate(video_list):
+        vid_filepath = video_data['videoPath']
+        # dirpath = os.path.dirname(vid_filepath)
+        fname = os.path.basename(vid_filepath)
+        vid_filepath = os.path.join(phrases_dir, fname)
+
+        # Finding the GT text
+        gt_text = video_data['transcript']
+        
+        # Finding the transcript transcript and WER
+        print(f"\n{'*' * 70}")
+        transcript = pipeline(vid_filepath)
+
+        wd = compute_word_level_distance(gt_text, transcript)
+        gt_len = len(gt_text.split())
+
+        total_word_distance += wd
+        total_length += len(gt_text.split())
+        wer = total_word_distance/total_length
+
+        data = [
+            vid_filepath,
+            gt_text,
+            transcript,
+            gt_len,
+            wd,
+            wd/gt_len,
+            total_length,
+            total_word_distance,
+            wer
+        ]
+        writer.writerow(data)
+
+        print(f"{i} GT: {gt_text.upper()}")
+        print(f"{i} Pred: {transcript.upper()}")
+
+        print(f"{i} dist = {wd}, len: {gt_len}")
+        print(f"{i} WER: {wer}")
+        print(f"{'*' * 70}")
+
+    csv_fp.close()
+
+@hydra.main(version_base="1.3", config_path="configs", config_name="config")
+def infer_lrs3(cfg):
+    print(f"Inside the inference LRS3 function")
+    pipeline = InferencePipeline(cfg)
+    print(f"Got the inference pipeline")
+    lrs3_dir = "/ssd_scratch/cvit/vanshg/test"
+    print(f"LRS DIR: {lrs3_dir}")
+    filenames = glob.glob(os.path.join(lrs3_dir, "*/*.mp4"))
+    print(f"Total number of videos: {len(filenames)}")
+
+    csv_filepath = os.path.join(lrs3_dir, "results.csv")
+    csv_fp = open(csv_filepath, "w", newline='')
+    writer = csv.writer(csv_fp, delimiter=',')
+    row_names = [
+        "Filepath",
+        "Ground Truth Text",
+        "Predicted Text",
+        "Length",
+        "Word Distance",
+        "WER",
+        "Total Length",
+        "Total Word Distance",
+        "Final WER"
+    ]
+    writer.writerow(row_names)
+    print(f"Wrote the first row")
+    # write_row_to_csv(csv_filepath, row_names)
+
+    total_word_distance = 0
+    total_length = 0
+    for i, filename in enumerate(filenames):
+        vid_filepath = filename
+        dirpath = os.path.dirname(vid_filepath)
+        fname = os.path.basename(vid_filepath).split('.')[0]
+        txt_filepath = os.path.join(dirpath, f"{fname}.txt")
+
+        # Finding the GT text
+        text_list = open(txt_filepath, 'r').readline().split()[1:]
+        gt_text = ' '.join(text_list)
+        
+        # Finding the transcript transcript and WER
+        print(f"\n{'*' * 70}")
+        transcript = pipeline(vid_filepath)
+
+        wd = compute_word_level_distance(gt_text, transcript)
+        gt_len = len(gt_text.split())
+
+        total_word_distance += wd
+        total_length += len(gt_text.split())
+        wer = total_word_distance/total_length
+
+        data = [
+            vid_filepath,
+            gt_text,
+            transcript,
+            gt_len,
+            wd,
+            wd/gt_len,
+            total_length,
+            total_word_distance,
+            wer
+        ]
+        writer.writerow(data)
+
+        print(f"{i} GT: {gt_text}")
+        print(f"{i} Pred: {transcript}")
+
+        print(f"{i} dist = {wd}, len: {gt_len}")
+        print(f"{i} WER: {wer}")
+        print(f"{'*' * 70}")
+
+    csv_fp.close()
 
 if __name__ == "__main__":
-    main()
+    infer_phrases()

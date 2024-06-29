@@ -82,7 +82,7 @@ vid_dataloader = AVSRDataLoader(
 )
 seg_vid_len = seg_duration * 25
 
-speakers = [31, 32, 33, 34]
+speakers = [32, 33, 34]
 
 def get_gt_text(src_dir, fname):
     src_txt_filename = os.path.join(src_dir, f"{fname}.align")
@@ -122,9 +122,11 @@ for speaker in speakers:
     print(len(vid_filenames))
     print(vid_filenames[0])
 
+    # Iterating over video files of the speaker
     for data_filename in tqdm(vid_filenames):
         try:
             video_data = vid_dataloader.load_data(data_filename, None)
+            # print(f"shape of video_data = {video_data.shape}")
         except (UnboundLocalError, TypeError, OverflowError, AssertionError):
             continue
 
@@ -146,7 +148,7 @@ for speaker in speakers:
         token_id_str = " ".join(
             map(str, [_.item() for _ in text_transform.tokenize(gt_text)])
         )
-        basename = os.path.basename(data_filename)
+        basename = os.path.basename(dst_vid_filename)
 
         f.write(
             f"{args.speaker},{basename},{video_data.shape[0]},{token_id_str}\n"

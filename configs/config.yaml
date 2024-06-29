@@ -20,4 +20,8 @@ ckpt_path:
 pretrained_model_path:
 transfer_frontend:
 transfer_encoder:
-
+verbose: True
+wandb: False
+train_size: 0.7
+logging_dir: /ssd_scratch/cvit/vanshg/
+log_folder:

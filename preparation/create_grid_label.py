@@ -82,7 +82,7 @@ vid_dataloader = AVSRDataLoader(
 )
 seg_vid_len = seg_duration * 25
 
-speakers = [1]
+speakers = list(range(2, 21))
 
 # def get_gt_text(src_dir, fname):
 #     src_txt_filename = os.path.join(src_dir, f"{fname}.align")
