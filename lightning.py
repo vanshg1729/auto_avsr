@@ -66,6 +66,12 @@ class ModelModule(LightningModule):
         # print(f"yseq: {temp['yseq']}")
         # print(f"states: {len(temp['states']['decoder'])}")
         # print(f"{nbest_hyps[0].asdict()['score']}")
+        print(f"Number of hypothesis: {len(nbest_hyps)}")
+        for i, hyp in enumerate(nbest_hyps):
+            predicted_token_id = torch.tensor(list(map(int, hyp.asdict()["yseq"][1:])))
+            predicted = self.text_transform.post_process(predicted_token_id).replace("<eos>", "")
+            # print(f"Prediction {i}: {predicted}")
+
         nbest_hyps = [h.asdict() for h in nbest_hyps[: min(len(nbest_hyps), 1)]]
         predicted_token_id = torch.tensor(list(map(int, nbest_hyps[0]["yseq"][1:])))
         predicted = self.text_transform.post_process(predicted_token_id).replace("<eos>", "")

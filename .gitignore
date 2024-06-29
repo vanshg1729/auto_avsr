@@ -7,3 +7,7 @@ outputs/
 *.pyc
 *.tar
 .DS_Store
+**/datasets
+**/wandb
+**/preparation
+**/lightning_logs
