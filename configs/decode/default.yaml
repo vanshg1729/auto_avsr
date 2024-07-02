@@ -1,2 +1,8 @@
 name: default
 snr_target: 999999
+beam_size: 40
+penalty: 0.0
+maxlenratio: 0.0
+minlenratio: 0.0
+ctc_weight: 0.1
+lm_weight: 0.3

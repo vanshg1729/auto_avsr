@@ -18,6 +18,8 @@ slurm_job_id:
 file_path:
 ckpt_path:
 pretrained_model_path:
+rnnlm: ./checkpoints/lrs3/language_models/lm_en_subword/model.pth
+rnnlm_conf: ./checkpoints/lrs3/language_models/lm_en_subword/model.json
 transfer_frontend:
 transfer_encoder:
 verbose: True
