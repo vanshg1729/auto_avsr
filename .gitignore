@@ -11,3 +11,7 @@ outputs/
 **/wandb
 **/preparation
 **/lightning_logs
+**/data
+**/datasets
+**/WildVSR
+**/mooc

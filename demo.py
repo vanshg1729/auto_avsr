@@ -14,7 +14,7 @@ from datamodule.transforms import AudioTransform, VideoTransform
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
 class InferencePipeline(torch.nn.Module):
-    def __init__(self, cfg, detector="mediapipe"):
+    def __init__(self, cfg, detector="retinaface"):
         super(InferencePipeline, self).__init__()
         self.modality = cfg.data.modality
         if self.modality in ["audio", "audiovisual"]:
@@ -53,16 +53,17 @@ class InferencePipeline(torch.nn.Module):
 
         if self.modality in ["video", "audiovisual"]:
             video = self.load_video(data_filename)
-            # landmarks = self.landmarks_detector(video)
+            # print(f"load_video shape = {video.shape}")
+            landmarks = self.landmarks_detector(video)
             # print(f"Got the video landmarks: {type(landmarks)}, {len(landmarks)}")
             # print(f"type of landmarks[0]: {type(landmarks[0])}, {landmarks[0].shape}")
-            # video = self.video_process(video, landmarks)
+            video = self.video_process(video, landmarks)
             # print("Pre-processed the video using the landmarks")
             video = torch.tensor(video)
-            video = video.permute((0, 3, 1, 2))
+            video = video.permute((0, 3, 1, 2)) # (T, C, H, W)
             print(f"shape of video = {video.shape}")
-            video = self.video_transform(video)
-            # video = video[::2]
+            video = self.video_transform(video) # (C, T, H, W)
+
             print(f"Transformed the input video: {video.shape}")
         if self.modality == "video":
             with torch.no_grad():
@@ -129,7 +130,8 @@ def write_row_to_csv(filename, row):
 def main(cfg):
     pipeline = InferencePipeline(cfg)
     # gt_transcript = get_gt_text(cfg.file_path)
-    gt_transcript = "i need my medication"
+    # gt_transcript = "i need my medication"
+    gt_transcript = "I WASN'T VERY GOOD AT READING THINGS"
     print(f"Ground Truth Transcript: {gt_transcript}")
     transcript = pipeline(cfg.file_path)
     print(f"transcript: {transcript}")
@@ -231,40 +233,47 @@ def infer_lrs3(cfg):
     print(f"Inside the inference LRS3 function")
     pipeline = InferencePipeline(cfg)
     print(f"Got the inference pipeline")
-    lrs3_dir = "/ssd_scratch/cvit/vanshg/test"
-    print(f"LRS DIR: {lrs3_dir}")
-    filenames = glob.glob(os.path.join(lrs3_dir, "*/*.mp4"))
-    print(f"Total number of videos: {len(filenames)}")
+    # lrs3_dir = "/ssd_scratch/cvit/vanshg/test"
+    lrs3_dir = "./datasets/lrs3"
+    label_file = "./checkpoints/lrs3/labels/test.ref"
+    lines = open(label_file).read().splitlines()
 
-    csv_filepath = os.path.join(lrs3_dir, "results.csv")
-    csv_fp = open(csv_filepath, "w", newline='')
-    writer = csv.writer(csv_fp, delimiter=',')
-    row_names = [
-        "Filepath",
-        "Ground Truth Text",
-        "Predicted Text",
-        "Length",
-        "Word Distance",
-        "WER",
-        "Total Length",
-        "Total Word Distance",
-        "Final WER"
-    ]
-    writer.writerow(row_names)
-    print(f"Wrote the first row")
+    print(f"LRS DIR: {lrs3_dir}")
+    # filenames = glob.glob(os.path.join(lrs3_dir, "*/*.mp4"))
+    print(f"Total number of videos: {len(lines)}")
+
+    # csv_filepath = os.path.join(lrs3_dir, "results.csv")
+    # csv_fp = open(csv_filepath, "w", newline='')
+    # writer = csv.writer(csv_fp, delimiter=',')
+    # row_names = [
+    #     "Filepath",
+    #     "Ground Truth Text",
+    #     "Predicted Text",
+    #     "Length",
+    #     "Word Distance",
+    #     "WER",
+    #     "Total Length",
+    #     "Total Word Distance",
+    #     "Final WER"
+    # ]
+    # writer.writerow(row_names)
+    # print(f"Wrote the first row")
     # write_row_to_csv(csv_filepath, row_names)
 
     total_word_distance = 0
     total_length = 0
-    for i, filename in enumerate(filenames):
-        vid_filepath = filename
-        dirpath = os.path.dirname(vid_filepath)
-        fname = os.path.basename(vid_filepath).split('.')[0]
-        txt_filepath = os.path.join(dirpath, f"{fname}.txt")
+    for i, line in enumerate(lines):
+        basename, gt_text = line.split()[0], " ".join(line.split()[1:])
+        data_filename = os.path.join(lrs3_dir, f"{basename}.mp4")
+
+        vid_filepath = data_filename
+        # dirpath = os.path.dirname(vid_filepath)
+        # fname = os.path.basename(vid_filepath).split('.')[0]
+        # txt_filepath = os.path.join(dirpath, f"{fname}.txt")
 
         # Finding the GT text
-        text_list = open(txt_filepath, 'r').readline().split()[1:]
-        gt_text = ' '.join(text_list)
+        # text_list = open(txt_filepath, 'r').readline().split()[1:]
+        # gt_text = ' '.join(text_list)
         
         # Finding the transcript transcript and WER
         print(f"\n{'*' * 70}")
@@ -277,27 +286,27 @@ def infer_lrs3(cfg):
         total_length += len(gt_text.split())
         wer = total_word_distance/total_length
 
-        data = [
-            vid_filepath,
-            gt_text,
-            transcript,
-            gt_len,
-            wd,
-            wd/gt_len,
-            total_length,
-            total_word_distance,
-            wer
-        ]
-        writer.writerow(data)
+        # data = [
+        #     vid_filepath,
+        #     gt_text,
+        #     transcript,
+        #     gt_len,
+        #     wd,
+        #     wd/gt_len,
+        #     total_length,
+        #     total_word_distance,
+        #     wer
+        # ]
+        # writer.writerow(data)
 
         print(f"{i} GT: {gt_text}")
         print(f"{i} Pred: {transcript}")
 
-        print(f"{i} dist = {wd}, len: {gt_len}")
+        print(f"{i} dist = {wd}, len: {gt_len}, cur_wer: {wd/gt_len}")
         print(f"{i} WER: {wer}")
         print(f"{'*' * 70}")
 
-    csv_fp.close()
+    # csv_fp.close()
 
 if __name__ == "__main__":
-    infer_phrases()
+    main()

@@ -7,12 +7,11 @@
 """Encoder self-attention layer definition."""
 
 import copy
-
 import torch
 
-from espnet.nets.pytorch_backend.transformer.layer_norm import LayerNorm
-
 from torch import nn
+
+from espnet.nets.pytorch_backend.transformer.layer_norm import LayerNorm
 
 
 class EncoderLayer(nn.Module):
