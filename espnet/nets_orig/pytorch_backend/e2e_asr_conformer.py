@@ -86,11 +86,16 @@ class E2E(torch.nn.Module):
             self.ctc = None
 
     def forward(self, x, lengths, label):
+        """
+        :param torch.Tensor lengths: batch of lengths of hidden state sequences (B)
+        :param torch.Tensor label:
+            batch of padded character id sequence tensor (B, Lmax)
+        """
         if self.transformer_input_layer == "conv1d":
             lengths = torch.div(lengths, 640, rounding_mode="trunc")
-        padding_mask = make_non_pad_mask(lengths).to(x.device).unsqueeze(-2)
+        padding_mask = make_non_pad_mask(lengths).to(x.device).unsqueeze(-2) # (B, 1, T_max)
 
-        x, _ = self.encoder(x, padding_mask)
+        x, _ = self.encoder(x, padding_mask) # (B, T, C)
 
         # ctc loss
         loss_ctc, ys_hat = self.ctc(x, lengths, label)
@@ -99,7 +104,7 @@ class E2E(torch.nn.Module):
             x = self.proj_decoder(x)
 
         # decoder loss
-        ys_in_pad, ys_out_pad = add_sos_eos(label, self.sos, self.eos, self.ignore_id)
+        ys_in_pad, ys_out_pad = add_sos_eos(label, self.sos, self.eos, self.ignore_id) # (B, Lmax)
         ys_mask = target_mask(ys_in_pad, self.ignore_id)
         pred_pad, _ = self.decoder(ys_in_pad, ys_mask, x, padding_mask)
         loss_att = self.criterion(pred_pad, ys_out_pad)

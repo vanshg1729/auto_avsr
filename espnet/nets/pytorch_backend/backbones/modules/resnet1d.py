@@ -1,7 +1,6 @@
 import math
-import pdb
-
 import torch.nn as nn
+import pdb
 
 from espnet.nets.pytorch_backend.transformer.convolution import Swish
 
@@ -30,7 +29,7 @@ def downsample_basic_block(inplanes, outplanes, stride):
     :param outplanes: int, number of channels produced by the convolution.
     :param stride: int, size of the convolving kernel.
     """
-    return nn.Sequential(
+    return  nn.Sequential(
         nn.Conv1d(
             inplanes,
             outplanes,
@@ -63,7 +62,7 @@ class BasicBlock1D(nn.Module):
         """
         super(BasicBlock1D, self).__init__()
 
-        assert relu_type in ["relu", "prelu", "swish"]
+        assert relu_type in ["relu","prelu", "swish"]
 
         self.conv1 = conv3x3(inplanes, planes, stride)
         self.bn1 = nn.BatchNorm1d(planes)
@@ -84,7 +83,7 @@ class BasicBlock1D(nn.Module):
 
         self.conv2 = conv3x3(planes, planes)
         self.bn2 = nn.BatchNorm1d(planes)
-
+        
         self.downsample = downsample
         self.stride = stride
 
@@ -109,8 +108,8 @@ class BasicBlock1D(nn.Module):
 
 
 class ResNet1D(nn.Module):
-    def __init__(
-        self,
+
+    def __init__(self,
         block,
         layers,
         relu_type="swish",
@@ -153,9 +152,10 @@ class ResNet1D(nn.Module):
         self.layer3 = self._make_layer(block, 256, layers[2], stride=2)
         self.layer4 = self._make_layer(block, 512, layers[3], stride=2)
         self.avgpool = nn.AvgPool1d(
-            kernel_size=20 // self.a_upsample_ratio,
-            stride=20 // self.a_upsample_ratio,
+            kernel_size=20//self.a_upsample_ratio,
+            stride=20//self.a_upsample_ratio,
         )
+
 
     def _make_layer(self, block, planes, blocks, stride=1):
         """_make_layer.
@@ -170,7 +170,7 @@ class ResNet1D(nn.Module):
         if stride != 1 or self.inplanes != planes * block.expansion:
             downsample = self.downsample_block(
                 inplanes=self.inplanes,
-                outplanes=planes * block.expansion,
+                outplanes=planes*block.expansion,
                 stride=stride,
             )
 

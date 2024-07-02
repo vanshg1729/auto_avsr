@@ -1,12 +1,17 @@
 """Parallel beam search module."""
 
 import logging
-from typing import Any, Dict, List, NamedTuple, Tuple
+from typing import Any
+from typing import Dict
+from typing import List
+from typing import NamedTuple
+from typing import Tuple
 
 import torch
-
-from espnet.nets.beam_search import BeamSearch, Hypothesis
 from torch.nn.utils.rnn import pad_sequence
+
+from espnet.nets.beam_search import BeamSearch
+from espnet.nets.beam_search import Hypothesis
 
 
 class BatchHypothesis(NamedTuple):
@@ -30,19 +35,14 @@ class BatchBeamSearch(BeamSearch):
         """Convert list to batch."""
         if len(hyps) == 0:
             return BatchHypothesis()
-        yseq = pad_sequence(
+        yseq=pad_sequence(
             [h.yseq for h in hyps], batch_first=True, padding_value=self.eos
         )
         return BatchHypothesis(
             yseq=yseq,
-            length=torch.tensor(
-                [len(h.yseq) for h in hyps], dtype=torch.int64, device=yseq.device
-            ),
+            length=torch.tensor([len(h.yseq) for h in hyps], dtype=torch.int64, device=yseq.device),
             score=torch.tensor([h.score for h in hyps]).to(yseq.device),
-            scores={
-                k: torch.tensor([h.scores[k] for h in hyps], device=yseq.device)
-                for k in self.scorers
-            },
+            scores={k: torch.tensor([h.scores[k] for h in hyps], device=yseq.device) for k in self.scorers},
             states={k: [h.states[k] for h in hyps] for k in self.scorers},
         )
 
@@ -105,7 +105,7 @@ class BatchBeamSearch(BeamSearch):
         # Because of the flatten above, `top_ids` is organized as:
         # [hyp1 * V + token1, hyp2 * V + token2, ..., hypK * V + tokenK],
         # where V is `self.n_vocab` and K is `self.beam_size`
-        prev_hyp_ids = torch.div(top_ids, self.n_vocab, rounding_mode="trunc")
+        prev_hyp_ids = torch.div(top_ids, self.n_vocab, rounding_mode='trunc')
         new_token_ids = top_ids % self.n_vocab
         return prev_hyp_ids, new_token_ids, prev_hyp_ids, new_token_ids
 
@@ -319,7 +319,7 @@ class BatchBeamSearch(BeamSearch):
             )
         # add eos in the final loop to avoid that there are no ended hyps
         if i == maxlen - 1:
-            logging.debug("adding <eos> in the last position in the loop")
+            logging.info("adding <eos> in the last position in the loop")
             yseq_eos = torch.cat(
                 (
                     running_hyps.yseq,

@@ -2,6 +2,10 @@ python demo.py  data.modality=video \
                 pretrained_model_path=./checkpoints/vsr_trlrwlrs2lrs3vox2avsp_base.pth \
                 file_path=/ssd_scratch/cvit/vanshg/vansh_phrases/1718881781149_0_66740df5bcb54392537d19a8.mp4
 
+python demo.py  data.modality=video \
+                pretrained_model_path=./checkpoints/lrs3/models/LRS3_V_WER19.1/model.pth \
+                file_path=./data/sx283.mp4
+
 python eval.py data.modality=video \
                data.dataset.root_dir=/ssd_scratch/cvit/vanshg/preprocessed_grid/video \
                data.dataset.test_file=/ssd_scratch/cvit/vanshg/preprocessed_grid/labels/s1_label.csv \

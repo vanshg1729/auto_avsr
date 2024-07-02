@@ -1,5 +1,5 @@
-import logging
 from distutils.version import LooseVersion
+import logging
 
 import numpy as np
 import six
@@ -19,7 +19,7 @@ class CTC(torch.nn.Module):
     :param bool reduce: reduce the CTC loss into a scalar
     """
 
-    def __init__(self, odim, eprojs, dropout_rate, ctc_type="builtin", reduce=True):
+    def __init__(self, odim, eprojs, dropout_rate, ctc_type="warpctc", reduce=True):
         super().__init__()
         self.dropout_rate = dropout_rate
         self.loss = None
@@ -33,9 +33,6 @@ class CTC(torch.nn.Module):
             if LooseVersion(torch.__version__) < LooseVersion("1.7.0")
             else "builtin"
         )
-
-        if ctc_type != self.ctc_type:
-            logging.debug(f"CTC was set to {self.ctc_type} due to PyTorch version.")
 
         if self.ctc_type == "builtin":
             reduction_type = "sum" if reduce else "none"
@@ -129,26 +126,25 @@ class CTC(torch.nn.Module):
             ).to(dtype=dtype)
 
         # get length info
-        """
-        logging.debug(
+        logging.info(
             self.__class__.__name__
             + " input lengths:  "
             + "".join(str(hlens).split("\n"))
         )
-        logging.debug(
+        logging.info(
             self.__class__.__name__
             + " output lengths: "
             + "".join(str(olens).split("\n"))
         )
-        """
+
         if self.reduce:
             # NOTE: sum() is needed to keep consistency
             # since warpctc return as tensor w/ shape (1,)
             # but builtin return as tensor w/o shape (scalar).
             self.loss = self.loss.sum()
-            # logging.debug("ctc loss:" + str(float(self.loss)))
+            logging.info("ctc loss:" + str(float(self.loss)))
 
-        return self.loss, ys_hat
+        return self.loss
 
     def softmax(self, hs_pad):
         """softmax of frame activations
@@ -157,7 +153,7 @@ class CTC(torch.nn.Module):
         :return: log softmax applied 3d tensor (B, Tmax, odim)
         :rtype: torch.Tensor
         """
-        self.probs = F.softmax(self.ctc_lo(hs_pad), dim=-1)
+        self.probs = F.softmax(self.ctc_lo(hs_pad), dim=2)
         return self.probs
 
     def log_softmax(self, hs_pad):
@@ -167,7 +163,7 @@ class CTC(torch.nn.Module):
         :return: log softmax applied 3d tensor (B, Tmax, odim)
         :rtype: torch.Tensor
         """
-        return F.log_softmax(self.ctc_lo(hs_pad), dim=-1)
+        return F.log_softmax(self.ctc_lo(hs_pad), dim=2)
 
     def argmax(self, hs_pad):
         """argmax of frame activations
@@ -176,7 +172,7 @@ class CTC(torch.nn.Module):
         :return: argmax applied 2d tensor (B, Tmax)
         :rtype: torch.Tensor
         """
-        return torch.argmax(self.ctc_lo(hs_pad), dim=-1)
+        return torch.argmax(self.ctc_lo(hs_pad), dim=2)
 
     def forced_align(self, h, y, blank_id=0):
         """forced alignment.
@@ -242,90 +238,6 @@ class CTC(torch.nn.Module):
             output_state_seq.append(y_int[state_seq[t, 0]])
 
         return output_state_seq
-
-    def forced_align_batch(self, hs_pad, ys_pad, ilens, blank_id=0):
-        """forced alignment with batch processing.
-
-        :param torch.Tensor hs_pad: hidden state sequence, 3d tensor (T, B, D)
-        :param torch.Tensor ys_pad: id sequence tensor 2d tensor (B, L)
-        :param torch.Tensor ilens: Input length of each utterance (B,)
-        :param int blank_id: blank symbol index
-        :return: best alignment results
-        :rtype: list of numpy.array
-        """
-
-        def interpolate_blank(label, olens_int):
-            """Insert blank token between every two label token."""
-            lab_len = label.shape[1] * 2 + 1
-            label_out = np.full((label.shape[0], lab_len), blank_id, dtype=np.int64)
-            label_out[:, 1::2] = label
-            for b in range(label.shape[0]):
-                label_out[b, olens_int[b] * 2 + 1 :] = self.ignore_id
-            return label_out
-
-        neginf = float("-inf")  # log of zero
-        # lpz = self.log_softmax(hs_pad).cpu().detach().numpy()
-        # hs_pad = hs_pad.transpose(1,0)
-        lpz = F.log_softmax(hs_pad, dim=-1).cpu().detach().numpy()
-        ilens = ilens.cpu().detach().numpy()
-
-        ys_pad = ys_pad.cpu().detach().numpy()
-        ys = [y[y != self.ignore_id] for y in ys_pad]  # parse padded ys
-        olens = np.array([len(s) for s in ys])
-        olens_int = olens * 2 + 1
-        ys_int = interpolate_blank(ys_pad, olens_int)
-
-        Tmax, B, _ = lpz.shape
-        Lmax = ys_int.shape[-1]
-        logdelta = np.full((Tmax, B, Lmax), neginf, dtype=lpz.dtype)
-        state_path = -np.ones(logdelta.shape, dtype=np.int16)  # state path
-
-        b_indx = np.arange(B, dtype=np.int64)
-        t_0 = np.zeros(B, dtype=np.int64)
-        logdelta[0, :, 0] = lpz[t_0, b_indx, ys_int[:, 0]]
-        logdelta[0, :, 1] = lpz[t_0, b_indx, ys_int[:, 1]]
-
-        s_indx_mat = np.arange(Lmax)[None, :].repeat(B, 0)
-        notignore_mat = ys_int != self.ignore_id
-        same_lab_mat = np.zeros((B, Lmax), dtype=np.bool)
-        same_lab_mat[:, 3::2] = ys_int[:, 3::2] == ys_int[:, 1:-2:2]
-        Lmin = olens_int.min()
-        for t in range(1, Tmax):
-            s_start = max(0, Lmin - (Tmax - t) * 2)
-            s_end = min(Lmax, t * 2 + 2)
-            candidates = np.full((B, Lmax, 3), neginf, dtype=logdelta.dtype)
-            candidates[:, :, 0] = logdelta[t - 1, :, :]
-            candidates[:, 1:, 1] = logdelta[t - 1, :, :-1]
-            candidates[:, 3::2, 2] = logdelta[t - 1, :, 1:-2:2]
-            candidates[same_lab_mat, 2] = neginf
-            candidates_ = candidates[:, s_start:s_end, :]
-            idx = candidates_.argmax(-1)
-            b_i, s_i = np.ogrid[:B, : idx.shape[-1]]
-            nignore = notignore_mat[:, s_start:s_end]
-            logdelta[t, :, s_start:s_end][nignore] = (
-                candidates_[b_i, s_i, idx][nignore]
-                + lpz[t, b_i, ys_int[:, s_start:s_end]][nignore]
-            )
-            s = s_indx_mat[:, s_start:s_end]
-            state_path[t, :, s_start:s_end][nignore] = (s - idx)[nignore]
-
-        alignments = []
-        prev_states = logdelta[
-            ilens[:, None] - 1,
-            b_indx[:, None],
-            np.stack([olens_int - 2, olens_int - 1], -1),
-        ].argmax(-1)
-        for b in range(B):
-            T, L = ilens[b], olens_int[b]
-            prev_state = prev_states[b] + L - 2
-            ali = np.empty(T, dtype=ys_int.dtype)
-            ali[T - 1] = ys_int[b, prev_state]
-            for t in range(T - 2, -1, -1):
-                prev_state = state_path[t + 1, b, prev_state]
-                ali[t] = ys_int[b, prev_state]
-            alignments.append(ali)
-
-        return alignments
 
 
 def ctc_for(args, odim, reduce=True):

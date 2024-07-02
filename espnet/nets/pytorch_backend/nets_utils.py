@@ -513,12 +513,12 @@ class MLPHead(torch.nn.Module):
         elif norm == "layernorm":
             self.norm1 = torch.nn.LayerNorm(hdim)
         self.nonlin1 = torch.nn.ReLU(inplace=True)
-        self.fc2 = torch.nn.Linear(hdim, odim)
+        self.fc2 = torch.nn.Linear( hdim, odim)
 
     def forward(self, x):
         x = self.fc1(x)
         if self.norm == "batchnorm":
-            x = self.bn1(x.transpose(1, 2)).transpose(1, 2)
+            x = self.bn1(x.transpose(1,2)).transpose(1,2)
         elif self.norm == "layernorm":
             x = self.norm1(x)
         x = self.nonlin1(x)
