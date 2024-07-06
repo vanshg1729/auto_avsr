@@ -38,6 +38,7 @@ class AVSRDataLoader:
             video = self.load_video(data_filename)
             if not landmarks:
                 landmarks = self.landmarks_detector(video)
+                print(f"Got the face landmarks")
             video = self.video_process(video, landmarks)
             if video is None:
                 raise TypeError("video cannot be None")
@@ -48,23 +49,23 @@ class AVSRDataLoader:
         waveform, sample_rate = torchaudio.load(data_filename, normalize=True)
         return waveform, sample_rate
 
-    def load_video(self, data_filename):
-        cap = cv2.VideoCapture(data_filename)
-        frames = []
-        while cap.isOpened():
-            ret, frame = cap.read()
-            if not ret:
-                break
-            frames.append(frame)
-        cap.release()
-        frames = np.array(frames)
-        return frames
-
     # def load_video(self, data_filename):
-    #     """
-    #     NOTE: There is some issue with torchvision.io.read_video and it doesn't read the entire video
-    #     """
-    #     return torchvision.io.read_video(data_filename, pts_unit="sec")[0].numpy()
+    #     cap = cv2.VideoCapture(data_filename)
+    #     frames = []
+    #     while cap.isOpened():
+    #         ret, frame = cap.read()
+    #         if not ret:
+    #             break
+    #         frames.append(frame)
+    #     cap.release()
+    #     frames = np.array(frames)
+    #     return frames
+
+    def load_video(self, data_filename):
+        """
+        NOTE: There is some issue with torchvision.io.read_video and it doesn't read the entire video
+        """
+        return torchvision.io.read_video(data_filename, pts_unit="sec")[0].numpy()
 
     def audio_process(self, waveform, sample_rate, target_sample_rate=16000):
         if sample_rate != target_sample_rate:

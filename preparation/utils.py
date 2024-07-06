@@ -85,7 +85,7 @@ def save_vid_aud_txt(
 ):
     # -- save video
     if dst_vid_filename is not None:
-        save2vid_opencv(dst_vid_filename, trim_vid_data, video_fps)
+        save2vid(dst_vid_filename, trim_vid_data, video_fps)
     # -- save audio
     if dst_aud_filename is not None:
         save2aud(dst_aud_filename, trim_aud_data, audio_sample_rate)
@@ -106,7 +106,7 @@ def save2vid_imageio(filename, vid, fps):
 def save2vid_opencv(filename, vid, fps):
     os.makedirs(os.path.dirname(filename), exist_ok=True)
     vid = vid.numpy().astype(np.uint8)
-    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+    fourcc = cv2.VideoWriter_fourcc(*'avc1')
     T, H, W, C = vid.shape
     frame_size = (W, H)
     parent_dir = os.path.dirname(filename)

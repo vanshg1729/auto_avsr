@@ -72,6 +72,7 @@ class ModelModule(LightningModule):
         sample : (B, 1, T, 88, 88)
         """
         # print(f"sample.shape = {sample.shape}")
+        print(f"self.device = {self.device}")
         enc_feat, _ = self.model.encoder(sample.unsqueeze(0).to(self.device), None)
         enc_feat = enc_feat.squeeze(0)  # (B, T, C)
 

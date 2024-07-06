@@ -1,6 +1,7 @@
 import argparse
 import glob
 import json
+import string
 import math
 import os
 import pickle
@@ -26,7 +27,7 @@ parser.add_argument(
 parser.add_argument(
     "--detector",
     type=str,
-    default="mediapipe",
+    default="retinaface",
     help="Type of face detector. (Default: mediapipe)",
 )
 parser.add_argument(
@@ -38,7 +39,7 @@ parser.add_argument(
 parser.add_argument(
     "--root-dir",
     type=str,
-    default='/ssd_scratch/cvit/vanshg/vansh_phrases/preprocessed_phrases',
+    default='/ssd_scratch/cvit/vanshg/vansh_phrases/',
     help="Root directory of preprocessed dataset",
 )
 parser.add_argument(
@@ -84,6 +85,7 @@ vid_dataloader = AVSRDataLoader(
 seg_vid_len = seg_duration * 25
 
 def get_gt_text(src_dir, fname):
+    punctuation = string.punctuation.replace("'", "")
     src_txt_filename = os.path.join(src_dir, f"{fname}.align")
     words = []
     with open(src_txt_filename, "r") as file:
@@ -96,7 +98,7 @@ def get_gt_text(src_dir, fname):
 phrases_fp = os.path.join(args.data_dir, f"phrases.json")
 src_vid_dir = os.path.join(args.data_dir, f"videos")
 
-dst_vid_dir = os.path.join(args.root_dir, f"videos")
+dst_vid_dir = os.path.join(args.root_dir, f"processed_videos")
 dst_txt_dir = os.path.join(args.root_dir, f"transcriptions")
 
 # reading the phrases json file
@@ -113,7 +115,7 @@ os.makedirs(dst_txt_dir, exist_ok=True)
 
 # Label file for the videos
 dst_label_dir = args.root_dir
-dst_label_file = os.path.join(dst_label_dir, f"phrases_label.csv")
+dst_label_file = os.path.join(dst_label_dir, f"phrases_label.txt")
 os.makedirs(dst_label_dir, exist_ok=True)
 f = open(dst_label_file, "w")
 
@@ -148,13 +150,13 @@ for i, video_metadata in enumerate(video_list):
     )
 
     # Getting the token string
-    token_id_str = " ".join(
-        map(str, [_.item() for _ in text_transform.tokenize(gt_text)])
-    )
+    # token_id_str = " ".join(
+    #     map(str, [_.item() for _ in text_transform.tokenize(gt_text)])
+    # )
     basename = os.path.basename(dst_vid_filename)
 
     f.write(
-        f"{i},{basename},{video_data.shape[0]},{token_id_str}\n"
+        f"{basename} {gt_text}\n"
     )
     print(f"saved the data for {video_fname} to {dst_vid_filename}")
 f.close()
