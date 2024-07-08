@@ -91,7 +91,7 @@ class VideoTransform:
         if subset == "train":
             self.video_pipeline = torch.nn.Sequential(
                 torchvision.transforms.Grayscale(),
-                FunctionalModule(lambda x: x.permute(1, 0, 2, 3)), # (C, T, H, W)
+                # FunctionalModule(lambda x: x.permute(1, 0, 2, 3)), # (C, T, H, W)
                 FunctionalModule(lambda x: x / 255.0),
                 torchvision.transforms.RandomCrop(88),
                 AdaptiveTimeMask(10, 25),
@@ -100,7 +100,7 @@ class VideoTransform:
         elif subset == "val" or subset == "test":
             self.video_pipeline = torch.nn.Sequential(
                 torchvision.transforms.Grayscale(),
-                FunctionalModule(lambda x: x.permute(1, 0, 2, 3)), # (C, T, H, W)
+                # FunctionalModule(lambda x: x.permute(1, 0, 2, 3)), # (C, T, H, W)
                 FunctionalModule(lambda x: x / 255.0),
                 torchvision.transforms.CenterCrop(88),
                 torchvision.transforms.Normalize(0.421, 0.165),

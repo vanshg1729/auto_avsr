@@ -24,7 +24,7 @@ def cut_or_pad(data, size, dim=0):
     return data
 
 
-def load_video(path):
+def load_video_opencv(path):
     """
     rtype: torch, T x C x H x W
     """
@@ -41,9 +41,13 @@ def load_video(path):
     vid = vid.permute((0, 3, 1, 2))
     return vid
 
-    # vid = torchvision.io.read_video(path, pts_unit="sec", output_format="THWC")[0]
-    # vid = vid.permute((0, 3, 1, 2))
-    # return vid
+def load_video(path):
+    """
+    rtype: torch, T x C x H x W
+    """
+    vid = torchvision.io.read_video(path, pts_unit="sec", output_format="THWC")[0]
+    vid = vid.permute((0, 3, 1, 2)) # (T, C, H, W)
+    return vid
 
 
 def load_audio(path):
@@ -67,6 +71,7 @@ class PhraseDataset(torch.utils.data.Dataset):
 
         self.root_dir = root_dir
         self.data_size = data_size
+        self.label_path = label_path
         self.rng_seed = rng_seed
         self.rng = random.Random(rng_seed)
         self.text_transform = TextTransform()
@@ -96,18 +101,18 @@ class PhraseDataset(torch.utils.data.Dataset):
     def load_list(self, label_path):
         print(f"Label Path : {label_path}, exists = {os.path.exists(label_path)}")
         f = open(label_path, 'r')
-        video_list = json.load(f)
+        video_list = f.readlines()
         return video_list
 
     def __getitem__(self, idx):
         video_metadata = self.video_list[idx]
-        rel_path = os.path.basename(video_metadata['videoPath'])
-        gt_text = video_metadata['transcript'].upper()
-        token_id = self.text_transform.tokenize(gt_text)
+        rel_path, gt_text = video_metadata.split()[0], " ".join(video_metadata.split()[1:])
 
-        path = os.path.join(self.root_dir, "videos", rel_path)
-        video = load_video(path)
-        video = self.video_transform(video)
+        video_filepath = os.path.join(self.root_dir, rel_path)
+        token_id = self.text_transform.tokenize(gt_text.upper())
+
+        video = load_video(video_filepath)
+        video = self.video_transform(video) # (T, 1, H, W)
         return {"input": video, "target": token_id}
 
     def __len__(self):

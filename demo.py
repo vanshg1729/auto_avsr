@@ -75,7 +75,7 @@ class InferencePipeline(torch.nn.Module):
             audio = self.audio_transform(audio)
 
         if self.modality in ["video", "audiovisual"]:
-            video = self.load_video(data_filename)
+            video = self.load_video(data_filename) # (T, H, W, C)
             # print(f"load_video shape = {video.shape}")
             # landmarks = self.landmarks_detector(video)
             # print(f"Got the video landmarks: {type(landmarks)}, {len(landmarks)}")
@@ -180,15 +180,15 @@ def infer_wildvsr(cfg):
 def infer_phrases(cfg):
     pipeline = InferencePipeline(cfg)
     print(f"Got the inference pipeline")
-    phrases_dir = "/ssd_scratch/cvit/vanshg/vansh_phrases/preprocessed_phrases/videos"
-    # phrases_dir = "/ssd_scratch/cvit/vanshg/vansh_phrases/videos"
+    phrases_dir = "/ssd_scratch/cvit/vanshg/vansh_phrases/"
     assert os.path.exists(phrases_dir), f"Phrases dir: '{phrases_dir}' doesn't exists"
     print(f"Phrases DIR: {phrases_dir}")
-    label_file = "/ssd_scratch/cvit/vanshg/vansh_phrases/phrases.json"
+
+    label_file = "/ssd_scratch/cvit/vanshg/vansh_phrases/test_labels.txt"
     print(f"Label file: {label_file}")
+    lines = open(label_file).read().splitlines()
     f = open(label_file, 'r')
-    video_list = json.load(f)
-    print(f"Total number of videos: {len(video_list)}")
+    print(f"Total number of videos: {len(label_file)}")
 
     csv_filepath = os.path.join(phrases_dir, "results.csv")
     csv_fp = open(csv_filepath, "w", newline='')
@@ -210,14 +210,11 @@ def infer_phrases(cfg):
 
     total_word_distance = 0
     total_length = 0
-    for i, video_data in enumerate(video_list):
-        vid_filepath = video_data['videoPath']
-        # dirpath = os.path.dirname(vid_filepath)
-        fname = os.path.basename(vid_filepath)
-        vid_filepath = os.path.join(phrases_dir, fname)
-
-        # Finding the GT text
-        gt_text = video_data['transcript']
+    for i, line in enumerate(lines):
+        basename, gt_text = line.split()[0], " ".join(line.split()[1:])
+        # basename = os.path.basename(basename)
+        data_filename = os.path.join(phrases_dir, f"{basename}")
+        vid_filepath = data_filename
         
         # Finding the transcript transcript and WER
         print(f"\n{'*' * 70}")
@@ -257,7 +254,7 @@ def infer_lrs3(cfg):
     print(f"Inside the inference LRS3 function")
     pipeline = InferencePipeline(cfg)
     print(f"Got the inference pipeline")
-    # lrs3_dir = "/ssd_scratch/cvit/vanshg/lrs3_test"
+    # lrs3_dir = "/ssd_scratch/cvit/vanshg/processed_lrs3_test"
     lrs3_dir = "/ssd_scratch/cvit/vanshg/vansh_phrases"
     # lrs3_dir = "./datasets/lrs3"
     # label_file = "./checkpoints/lrs3/labels/test.ref"
@@ -268,7 +265,7 @@ def infer_lrs3(cfg):
     # filenames = glob.glob(os.path.join(lrs3_dir, "*/*.mp4"))
     print(f"Total number of videos: {len(lines)}")
 
-    csv_filepath = os.path.join(lrs3_dir, "results_19.1_auto_avsr_opencv.csv")
+    csv_filepath = os.path.join(lrs3_dir, "phrases_results_19.1_auto_avsr.csv")
     csv_fp = open(csv_filepath, "w", newline='')
     writer = csv.writer(csv_fp, delimiter=',')
     row_names = [
@@ -290,8 +287,8 @@ def infer_lrs3(cfg):
     total_length = 0
     for i, line in enumerate(lines):
         basename, gt_text = line.split()[0], " ".join(line.split()[1:])
-        basename = os.path.basename(basename)
-        data_filename = os.path.join(lrs3_dir, f"processed_videos_opencv/{basename}")
+        # basename = os.path.basename(basename)
+        data_filename = os.path.join(lrs3_dir, f"{basename}")
 
         vid_filepath = data_filename
         # dirpath = os.path.dirname(vid_filepath)
@@ -341,13 +338,12 @@ def infer_tcd(cfg):
     pipeline = InferencePipeline(cfg)
     print(f"Got the inference pipeline")
 
-    data_dir = "/ssd_scratch/cvit/vanshg/tcd_processed"
-    label_file = "/ssd_scratch/cvit/vanshg/tcd_processed/speaker2/straightcam/labels.txt"
+    data_dir = "/ssd_scratch/cvit/vanshg/tcd_processed/volunteers/01M/straightcam/videos"
+    label_file = "/ssd_scratch/cvit/vanshg/tcd_processed/volunteers/01M/straightcam/labels.txt"
     print(f"label file: {label_file}")
     lines = open(label_file).read().splitlines()
 
     print(f"Data Dir: {data_dir}")
-    # filenames = glob.glob(os.path.join(lrs3_dir, "*/*.mp4"))
     print(f"Total number of videos: {len(lines)}")
 
     results_dir = os.path.dirname(label_file)
@@ -373,6 +369,7 @@ def infer_tcd(cfg):
     total_length = 0
     for i, line in enumerate(lines):
         basename, gt_text = line.split()[0], " ".join(line.split()[1:])
+        basename = os.path.basename(basename)
         data_filename = os.path.join(data_dir, f"{basename}")
 
         vid_filepath = data_filename
@@ -411,4 +408,4 @@ def infer_tcd(cfg):
     csv_fp.close()
 
 if __name__ == "__main__":
-    infer_lrs3()
+    infer_phrases()

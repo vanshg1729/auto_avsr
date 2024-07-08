@@ -4,8 +4,12 @@ from pytorch_lightning import LightningModule
 
 from cosine import WarmupCosineScheduler
 from datamodule.transforms import TextTransform
+
+from espnet.asr.asr_utils import torch_load
+from espnet.asr.asr_utils import get_model_conf
 from espnet.nets.batch_beam_search import BatchBeamSearch
-from espnet.nets.pytorch_backend.e2e_asr_conformer import E2E
+from espnet.nets.pytorch_backend.e2e_asr_transformer import E2E
+from espnet.nets.lm_interface import dynamic_import_lm
 from espnet.nets.scorers.ctc import CTCPrefixScorer
 from espnet.nets.scorers.length_bonus import LengthBonus
 import wandb
@@ -32,6 +36,19 @@ class ModelModule(LightningModule):
         self.text_transform = TextTransform()
         self.token_list = self.text_transform.token_list
         self.model = E2E(len(self.token_list), self.backbone_args)
+
+        # language model configuration
+        rnnlm = self.cfg.rnnlm
+        rnnlm_conf = self.cfg.rnnlm_conf
+        penalty = self.cfg.decode.penalty
+        ctc_weight = self.cfg.decode.ctc_weight
+        lm_weight = self.cfg.decode.lm_weight
+        beam_size = self.cfg.decode.beam_size
+        
+        # beam search decoder
+        self.beam_search = get_beam_search_decoder(self.model, self.token_list, rnnlm, rnnlm_conf, penalty, ctc_weight, lm_weight, beam_size)
+        print(f"init: self.device: {self.device}")
+        self.beam_search.to(device=self.device).eval()
 
         # -- initialise
         if self.cfg.pretrained_model_path:
@@ -88,8 +105,11 @@ class ModelModule(LightningModule):
         return self._step(batch, batch_idx, step_type="train")
 
     def validation_step(self, batch, batch_idx):
+        """
+            - batch: tensor of shape (T, H, W)
+        """
         enc_feat, _ = self.model.encoder(batch["input"].unsqueeze(0).to(self.device), None)
-        enc_feat = enc_feat.squeeze(0)
+        enc_feat = enc_feat.squeeze(0) # (T, 512)
 
         nbest_hyps = self.beam_search(enc_feat)
         nbest_hyps = [h.asdict() for h in nbest_hyps[: min(len(nbest_hyps), 1)]]
@@ -140,8 +160,12 @@ class ModelModule(LightningModule):
         return
 
     def _step(self, batch, batch_idx, step_type):
-        loss, loss_ctc, loss_att, acc = self.model(batch["inputs"], batch["input_lengths"], batch["targets"])
+        B, T, C, H, W = batch['inputs'].shape
+        print(f"shape of batch = {batch['inputs'].shape}")
+        inputs = torch.moveaxis(batch['inputs'], 2, 1) # (B, C, T, H, W)
+        loss, loss_ctc, loss_att, acc = self.model(inputs, batch["input_lengths"], batch["targets"])
         batch_size = len(batch["inputs"])
+        print(f"Got the loss")
 
         if step_type == "train":
             self.epoch_loss += loss.item() * batch_size
@@ -213,27 +237,37 @@ class ModelModule(LightningModule):
         self.total_length = 0
         self.total_edit_distance = 0
         self.text_transform = TextTransform()
-        self.beam_search = get_beam_search_decoder(self.model, self.token_list)
 
     def on_test_epoch_end(self):
         self.log("wer", self.total_edit_distance / self.total_length)
 
+def get_beam_search_decoder(model, token_list, rnnlm=None, rnnlm_conf=None, penalty=0, ctc_weight=0.1, lm_weight=0., beam_size=40):
+    if not rnnlm:
+        lm = None
+    else:
+        lm_args = get_model_conf(rnnlm, rnnlm_conf)
+        lm_model_module = getattr(lm_args, "model_module", "default")
+        lm_class = dynamic_import_lm(lm_model_module, lm_args.backend)
+        lm = lm_class(len(token_list), lm_args)
+        torch_load(rnnlm, lm)
+        lm.eval()
 
-def get_beam_search_decoder(model, token_list, ctc_weight=0.1, beam_size=40):
     scorers = {
         "decoder": model.decoder,
         "ctc": CTCPrefixScorer(model.ctc, model.eos),
         "length_bonus": LengthBonus(len(token_list)),
-        "lm": None
+        "lm": lm
     }
-
+    scorers["lm"] = lm
+    scorers["length_bonus"] = LengthBonus(len(token_list))
     weights = {
         "decoder": 1.0 - ctc_weight,
         "ctc": ctc_weight,
-        "lm": 0.0,
-        "length_bonus": 0.0,
+        "lm": lm_weight,
+        "length_bonus": penalty,
     }
 
+    print(weights)
     return BatchBeamSearch(
         beam_size=beam_size,
         vocab_size=len(token_list),

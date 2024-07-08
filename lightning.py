@@ -13,6 +13,7 @@ from espnet.nets.pytorch_backend.e2e_asr_transformer import E2E
 from espnet.nets.lm_interface import dynamic_import_lm
 from espnet.nets.scorers.ctc import CTCPrefixScorer
 from espnet.nets.scorers.length_bonus import LengthBonus
+import wandb
 
 
 def compute_word_level_distance(seq1, seq2):
@@ -135,8 +136,10 @@ class ModelModule(LightningModule):
         return
 
     def _step(self, batch, batch_idx, step_type):
+        B, T, C, H, W = batch.shape
+        inputs = torch.moveaxis(batch['inputs'], 2, 1) # (B, C, T, H, W)
         loss, loss_ctc, loss_att, acc = self.model(
-            batch["inputs"], batch["input_lengths"], batch["targets"])
+            inputs, batch["input_lengths"], batch["targets"])
         batch_size = len(batch["inputs"])
 
         if step_type == "train":

@@ -65,7 +65,6 @@ class DataModulePhrase(LightningDataModule):
             label_path=ds_args.train_file,
             video_transform=VideoTransform("train"),
             subset="train",
-            data_size=self.cfg.train_size
         )
         return self._dataloader(train_ds, collate_pad)
 
@@ -86,14 +85,13 @@ class DataModulePhrase(LightningDataModule):
     #         sampler = DistributedSamplerWrapper(sampler, shuffle=False, drop_last=True)
     #     return self._dataloader(val_ds, sampler, collate_pad)
 
-    def val_dataloader(self):
-        ds_args = self.cfg.data.dataset
-        dataset = PhraseDataset(
-            root_dir=ds_args.root_dir,
-            label_path=ds_args.test_file,
-            video_transform=VideoTransform("test"),
-            subset="test",
-            data_size=0.2
-        )
-        dataloader = torch.utils.data.DataLoader(dataset, batch_size=None, num_workers=1)
-        return dataloader
+    # def val_dataloader(self):
+    #     ds_args = self.cfg.data.dataset
+    #     dataset = PhraseDataset(
+    #         root_dir=ds_args.root_dir,
+    #         label_path=ds_args.test_file,
+    #         video_transform=VideoTransform("test"),
+    #         subset="test",
+    #     )
+    #     dataloader = torch.utils.data.DataLoader(dataset, batch_size=None, num_workers=1)
+    #     return dataloader
