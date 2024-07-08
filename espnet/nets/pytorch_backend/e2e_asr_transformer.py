@@ -336,8 +336,7 @@ class E2E(torch.nn.Module):
         print(f"label = {label}")
 
         # ctc loss
-        loss_ctc = self.ctc(x, lengths, label)
-        print(f"loss_ctc = {loss_ctc}")
+        loss_ctc, ys_hat = self.ctc(x, lengths, label)
 
         if self.proj_decoder:
             x = self.proj_decoder(x)
