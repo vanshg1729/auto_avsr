@@ -246,8 +246,8 @@ class E2E(torch.nn.Module):
         self.a_upsample_ratio = args.a_upsample_ratio
 
         self.proj_decoder = None
-        if args.adim != args.ddim:
-            self.proj_decoder = torch.nn.Linear(args.adim, args.ddim)
+        # if args.adim != args.ddim:
+        #     self.proj_decoder = torch.nn.Linear(args.adim, args.ddim)
 
         if args.mtlalpha < 1:
             self.decoder = Decoder(
@@ -282,7 +282,7 @@ class E2E(torch.nn.Module):
         self.mtlalpha = args.mtlalpha
         if args.mtlalpha > 0.0:
             self.ctc = CTC(
-                odim, args.adim, args.dropout_rate, ctc_type=args.ctc_type, reduce=False
+                odim, args.adim, args.dropout_rate, ctc_type=args.ctc_type, reduce=True
             )
         else:
             self.ctc = None
@@ -329,11 +329,6 @@ class E2E(torch.nn.Module):
         padding_mask = make_non_pad_mask(lengths).to(x.device).unsqueeze(-2)
 
         x, _ = self.encoder(x, padding_mask) # (B, Tmax, D)
-        print(f"Encoder features = {x.shape}")
-        print(f"lengths.shape = {lengths.shape}")
-        label = label.squeeze()
-        print(f"label.shape = {label.shape}")
-        print(f"label = {label}")
 
         # ctc loss
         loss_ctc, ys_hat = self.ctc(x, lengths, label)

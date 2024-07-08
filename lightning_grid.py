@@ -106,10 +106,11 @@ class ModelModule(LightningModule):
 
     def validation_step(self, batch, batch_idx):
         """
-            - batch: tensor of shape (T, H, W)
+            - batch: tensor of shape (T, 1, H, W)
         """
-        enc_feat, _ = self.model.encoder(batch["input"].unsqueeze(0).to(self.device), None)
-        enc_feat = enc_feat.squeeze(0) # (T, 512)
+        inputs = batch['input'].transpose(0, 1).unsqueeze(0) # (B=1, C=1, T, H, W)
+        enc_feat, _ = self.model.encoder(inputs.to(self.device), None)
+        enc_feat = enc_feat.squeeze(0) # (T, D)
 
         nbest_hyps = self.beam_search(enc_feat)
         nbest_hyps = [h.asdict() for h in nbest_hyps[: min(len(nbest_hyps), 1)]]
@@ -161,11 +162,10 @@ class ModelModule(LightningModule):
 
     def _step(self, batch, batch_idx, step_type):
         B, T, C, H, W = batch['inputs'].shape
-        print(f"shape of batch = {batch['inputs'].shape}")
-        inputs = torch.moveaxis(batch['inputs'], 2, 1) # (B, C, T, H, W)
+        inputs = batch['inputs'].transpose(1, 2) # (B, C, T, H, W)
+
         loss, loss_ctc, loss_att, acc = self.model(inputs, batch["input_lengths"], batch["targets"])
         batch_size = len(batch["inputs"])
-        print(f"Got the loss")
 
         if step_type == "train":
             self.epoch_loss += loss.item() * batch_size
@@ -217,8 +217,6 @@ class ModelModule(LightningModule):
     def on_validation_epoch_start(self):
         self.total_length = 0
         self.total_edit_distance = 0
-        self.text_transform = TextTransform()
-        self.beam_search = get_beam_search_decoder(self.model, self.token_list)
 
     def on_validation_epoch_end(self) -> None:
         wer = self.total_edit_distance/self.total_length
@@ -236,10 +234,19 @@ class ModelModule(LightningModule):
     def on_test_epoch_start(self):
         self.total_length = 0
         self.total_edit_distance = 0
-        self.text_transform = TextTransform()
 
     def on_test_epoch_end(self):
-        self.log("wer", self.total_edit_distance / self.total_length)
+        wer = self.total_edit_distance/self.total_length
+        log_dict = {
+            "wer_test_epoch": wer,
+            "epoch": self.current_epoch
+        }
+        if self.cfg.wandb:
+            wandb.log(log_dict)
+        else:
+            self.log_dict(log_dict, logger=True)
+        print_stats(log_dict)
+        return super().on_test_epoch_end()
 
 def get_beam_search_decoder(model, token_list, rnnlm=None, rnnlm_conf=None, penalty=0, ctc_weight=0.1, lm_weight=0., beam_size=40):
     if not rnnlm:

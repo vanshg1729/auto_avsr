@@ -22,7 +22,7 @@ rnnlm: ./checkpoints/lrs3/language_models/lm_en_subword/model.pth
 rnnlm_conf: ./checkpoints/lrs3/language_models/lm_en_subword/model.json
 transfer_frontend:
 transfer_encoder:
-verbose: True
+verbose: False
 wandb: False
 train_size: 0.7
 logging_dir: /ssd_scratch/cvit/vanshg/

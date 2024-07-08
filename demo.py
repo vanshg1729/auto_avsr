@@ -86,7 +86,8 @@ class InferencePipeline(torch.nn.Module):
             video = torch.tensor(video)
             video = video.permute((0, 3, 1, 2)) # (T, C, H, W)
             print(f"shape of video = {video.shape}")
-            video = self.video_transform(video) # (C, T, H, W)
+            video = self.video_transform(video) # (T, C, H, W)
+            video = video.transpose(0, 1) # (C, T, H, W)
 
             print(f"Transformed the input video: {video.shape}")
         if self.modality == "video":
