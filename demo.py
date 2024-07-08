@@ -258,17 +258,17 @@ def infer_lrs3(cfg):
     pipeline = InferencePipeline(cfg)
     print(f"Got the inference pipeline")
     # lrs3_dir = "/ssd_scratch/cvit/vanshg/lrs3_test"
-    lrs3_dir = "/ssd_scratch/cvit/vanshg/vansh_phrases"
+    lrs3_dir = "./datasets/vansh_phrases"
     # lrs3_dir = "./datasets/lrs3"
     # label_file = "./checkpoints/lrs3/labels/test.ref"
-    label_file = "/ssd_scratch/cvit/vanshg/vansh_phrases/labels.txt"
+    label_file = "./datasets/vansh_phrases/labels.txt"
     lines = open(label_file).read().splitlines()
 
     print(f"LRS DIR: {lrs3_dir}")
     # filenames = glob.glob(os.path.join(lrs3_dir, "*/*.mp4"))
     print(f"Total number of videos: {len(lines)}")
 
-    csv_filepath = os.path.join(lrs3_dir, "results_19.1_auto_avsr_opencv.csv")
+    csv_filepath = os.path.join(lrs3_dir, "results_19.1_auto_avsr.csv")
     csv_fp = open(csv_filepath, "w", newline='')
     writer = csv.writer(csv_fp, delimiter=',')
     row_names = [

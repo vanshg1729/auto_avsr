@@ -245,6 +245,10 @@ class E2E(torch.nn.Module):
         self.transformer_input_layer = args.transformer_input_layer
         self.a_upsample_ratio = args.a_upsample_ratio
 
+        self.proj_decoder = None
+        if args.adim != args.ddim:
+            self.proj_decoder = torch.nn.Linear(args.adim, args.ddim)
+
         if args.mtlalpha < 1:
             self.decoder = Decoder(
                 odim=odim,

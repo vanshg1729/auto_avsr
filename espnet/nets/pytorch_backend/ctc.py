@@ -144,7 +144,7 @@ class CTC(torch.nn.Module):
             self.loss = self.loss.sum()
             logging.info("ctc loss:" + str(float(self.loss)))
 
-        return self.loss
+        return self.loss, ys_hat
 
     def softmax(self, hs_pad):
         """softmax of frame activations
