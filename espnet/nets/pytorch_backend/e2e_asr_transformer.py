@@ -282,7 +282,7 @@ class E2E(torch.nn.Module):
         self.mtlalpha = args.mtlalpha
         if args.mtlalpha > 0.0:
             self.ctc = CTC(
-                odim, args.adim, args.dropout_rate, ctc_type=args.ctc_type, reduce=True
+                odim, args.adim, args.dropout_rate, ctc_type=args.ctc_type, reduce=False
             )
         else:
             self.ctc = None
@@ -322,3 +322,35 @@ class E2E(torch.nn.Module):
         else:
             enc_output, _ = self.encoder(x, None)
             return enc_output.squeeze(0)
+    
+    def forward(self, x, lengths, label):
+        if self.transformer_input_layer == "conv1d":
+            lengths = torch.div(lengths, 640, rounding_mode="trunc")
+        padding_mask = make_non_pad_mask(lengths).to(x.device).unsqueeze(-2)
+
+        x, _ = self.encoder(x, padding_mask) # (B, Tmax, D)
+        print(f"Encoder features = {x.shape}")
+        print(f"lengths.shape = {lengths.shape}")
+        label = label.squeeze()
+        print(f"label.shape = {label.shape}")
+        print(f"label = {label}")
+
+        # ctc loss
+        loss_ctc = self.ctc(x, lengths, label)
+        print(f"loss_ctc = {loss_ctc}")
+
+        if self.proj_decoder:
+            x = self.proj_decoder(x)
+
+        # decoder loss
+        ys_in_pad, ys_out_pad = add_sos_eos(label, self.sos, self.eos, self.ignore_id)
+        ys_mask = target_mask(ys_in_pad, self.ignore_id)
+        pred_pad, _ = self.decoder(ys_in_pad, ys_mask, x, padding_mask)
+        loss_att = self.criterion(pred_pad, ys_out_pad)
+        loss = self.mtlalpha * loss_ctc + (1 - self.mtlalpha) * loss_att
+
+        acc = th_accuracy(
+            pred_pad.view(-1, self.odim), ys_out_pad, ignore_label=self.ignore_id
+        )
+
+        return loss, loss_ctc, loss_att, acc
