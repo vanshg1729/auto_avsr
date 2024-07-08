@@ -4,7 +4,7 @@ python demo.py  data.modality=video \
 
 python demo.py  data.modality=video \
                 pretrained_model_path=./checkpoints/lrs3/models/LRS3_V_WER19.1/model.pth \
-                file_path=./data/sx283.mp4
+                file_path=./data/hailey_als.mp4
 
 python eval.py data.modality=video \
                data.dataset.root_dir=/ssd_scratch/cvit/vanshg/preprocessed_grid/video \
