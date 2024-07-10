@@ -1,4 +1,6 @@
 import os
+import numpy as np
+import random
 
 import torch
 from pytorch_lightning import LightningDataModule
@@ -6,6 +8,10 @@ from pytorch_lightning import LightningDataModule
 from .phrase_dataset import PhraseDataset
 from .transforms import VideoTransform
 
+def seed_worker(worker_id):
+    worker_seed = torch.initial_seed() % 2**32
+    np.random.seed(worker_seed)
+    random.seed(worker_seed)
 
 # https://github.com/facebookresearch/av_hubert/blob/593d0ae8462be128faab6d866a3a926e2955bde1/avhubert/hubert_dataset.py#L517
 def pad(samples, pad_val=0.0):
@@ -50,12 +56,17 @@ class DataModulePhrase(LightningDataModule):
         self.total_gpus = self.cfg.trainer.devices * self.cfg.trainer.num_nodes
 
     def _dataloader(self, ds, collate_fn):
+        g = torch.Generator()
+        g.manual_seed(0)
+
         return torch.utils.data.DataLoader(
             ds,
             batch_size=5,
             num_workers=1,
             pin_memory=True,
             collate_fn=collate_fn,
+            worker_init_fn=seed_worker,
+            generator=g
         )
 
     def train_dataloader(self):
@@ -86,6 +97,9 @@ class DataModulePhrase(LightningDataModule):
     #     return self._dataloader(val_ds, sampler, collate_pad)
 
     def val_dataloader(self):
+        g = torch.Generator()
+        g.manual_seed(0)
+
         ds_args = self.cfg.data.dataset
         dataset = PhraseDataset(
             root_dir=ds_args.root_dir,
@@ -93,5 +107,11 @@ class DataModulePhrase(LightningDataModule):
             video_transform=VideoTransform("test"),
             subset="test",
         )
-        dataloader = torch.utils.data.DataLoader(dataset, batch_size=None, num_workers=1)
+        dataloader = torch.utils.data.DataLoader(
+            dataset,
+            batch_size=None, 
+            num_workers=1,
+            worker_init_fn=seed_worker,
+            generator=g
+        )
         return dataloader

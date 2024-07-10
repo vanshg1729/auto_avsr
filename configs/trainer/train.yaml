@@ -8,6 +8,6 @@ num_sanity_val_steps: 0
 accumulate_grad_batches: 1
 gradient_clip_val: 5.0
 deterministic: warn
-# barebones: True
+barebones: True
 # replace_sampler_ddp: False
 # resume_from_checkpoint:
