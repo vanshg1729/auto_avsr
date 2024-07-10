@@ -36,6 +36,7 @@ class ModelModule(LightningModule):
         self.text_transform = TextTransform()
         self.token_list = self.text_transform.token_list
         self.model = E2E(len(self.token_list), self.backbone_args)
+        self.model.encoder.frontend.frontend3D.requires_grad_(False)
 
         # language model configuration
         rnnlm = self.cfg.rnnlm

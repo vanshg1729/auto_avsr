@@ -63,14 +63,13 @@ def main(cfg):
     # train_dataloader = datamodule.train_dataloader()
     trainer = Trainer(
         **cfg.trainer,
-        # logger=loggers,
+        logger=loggers,
         #logger=WandbLogger(name=cfg.exp_name, project="auto_avsr"),
-        # callbacks=callbacks,
+        callbacks=callbacks,
     )
 
     trainer.fit(model=modelmodule, datamodule=datamodule)
     # ensemble(cfg)
-
 
 if __name__ == "__main__":
     main()

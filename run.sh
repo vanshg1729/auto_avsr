@@ -33,3 +33,12 @@ python train_phrase.py exp_dir=/ssd_scratch/cvit/vanshg/vansh_phrases_exp \
                data.dataset.test_file=/ssd_scratch/cvit/vanshg/vansh_phrases/test_labels.txt \
                trainer.num_nodes=1 \
                pretrained_model_path=./checkpoints/lrs3/models/LRS3_V_WER19.1/model.pth \
+
+python finetune.py exp_dir=/ssd_scratch/cvit/vanshg/vansh_phrases_exp \
+               exp_name=vansh_phrases_auto_avsr \
+               data.modality=video \
+               data.dataset.root_dir=/ssd_scratch/cvit/vanshg/vansh_phrases \
+               data.dataset.train_file=/ssd_scratch/cvit/vanshg/vansh_phrases/train_labels.txt \
+               data.dataset.test_file=/ssd_scratch/cvit/vanshg/vansh_phrases/test_labels.txt \
+               trainer.num_nodes=1 \
+               pretrained_model_path=./checkpoints/lrs3/models/LRS3_V_WER19.1/model.pth \
