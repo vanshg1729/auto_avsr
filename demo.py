@@ -181,17 +181,18 @@ def infer_wildvsr(cfg):
 def infer_phrases(cfg):
     pipeline = InferencePipeline(cfg)
     print(f"Got the inference pipeline")
-    phrases_dir = "/ssd_scratch/cvit/vanshg/vansh_phrases/"
+    phrases_dir = "/ssd_scratch/cvit/vanshg/phrases_dataset"
     assert os.path.exists(phrases_dir), f"Phrases dir: '{phrases_dir}' doesn't exists"
     print(f"Phrases DIR: {phrases_dir}")
 
-    label_file = "/ssd_scratch/cvit/vanshg/vansh_phrases/test_labels.txt"
+    label_file = "/ssd_scratch/cvit/vanshg/phrases_dataset/akshat_phrases/train_labels.txt"
     print(f"Label file: {label_file}")
     lines = open(label_file).read().splitlines()
     f = open(label_file, 'r')
-    print(f"Total number of videos: {len(label_file)}")
+    print(f"Total number of videos: {len(lines)}")
 
-    csv_filepath = os.path.join(phrases_dir, "results.csv")
+    label_dir = os.path.dirname(label_file)
+    csv_filepath = os.path.join(label_dir, "akshat_train_19.1_auto_avsr.csv")
     csv_fp = open(csv_filepath, "w", newline='')
     writer = csv.writer(csv_fp, delimiter=',')
     row_names = [

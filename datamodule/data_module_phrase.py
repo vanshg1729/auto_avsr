@@ -52,8 +52,7 @@ class DataModulePhrase(LightningDataModule):
     def __init__(self, cfg=None):
         super().__init__()
         self.cfg = cfg
-        self.cfg.trainer.devices = torch.cuda.device_count()
-        self.total_gpus = self.cfg.trainer.devices * self.cfg.trainer.num_nodes
+        # self.total_gpus = self.cfg.trainer.devices * self.cfg.trainer.num_nodes
 
     def _dataloader(self, ds, collate_fn):
         g = torch.Generator()
