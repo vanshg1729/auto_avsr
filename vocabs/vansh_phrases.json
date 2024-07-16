@@ -1,0 +1,802 @@
+[
+    {
+        "videoId": "66740df5bcb54392537d19a8",
+        "videoPath": "upload/videos/vansh_66740d7ebcb54392537d199a/1718881781149_0_66740df5bcb54392537d19a8.mp4",
+        "transcript": "i need my medication",
+        "phraseId": "66740a79244f4c305eb28f95",
+        "phraseNumber": 0,
+        "_id": "66740df5bcb54392537d19ad"
+    },
+    {
+        "videoId": "66740f94bcb54392537d19b7",
+        "videoPath": "upload/videos/vansh_66740d7ebcb54392537d199a/1718882196929_1_66740f94bcb54392537d19b7.mp4",
+        "transcript": "what time is it",
+        "phraseId": "66740a79244f4c305eb28f98",
+        "phraseNumber": 1,
+        "_id": "66740f95bcb54392537d19bd"
+    },
+    {
+        "videoId": "6675b010aef97eac3b58597a",
+        "videoPath": "upload/videos/vansh_66740d7ebcb54392537d199a/1718988816405_2_6675b010aef97eac3b58597a.mp4",
+        "transcript": "i need water",
+        "phraseId": "66740a79244f4c305eb28f9b",
+        "phraseNumber": 2,
+        "_id": "6675b010aef97eac3b585981"
+    },
+    {
+        "videoId": "6675b132aef97eac3b585991",
+        "videoPath": "upload/videos/vansh_66740d7ebcb54392537d199a/1718989106582_3_6675b132aef97eac3b585991.mp4",
+        "transcript": "i am hungry",
+        "phraseId": "66740a79244f4c305eb28f9e",
+        "phraseNumber": 3,
+        "_id": "6675b132aef97eac3b585999"
+    },
+    {
+        "videoId": "6675b1b1aef97eac3b5859ac",
+        "videoPath": "upload/videos/vansh_66740d7ebcb54392537d199a/1718989233188_4_6675b1b1aef97eac3b5859ac.mp4",
+        "transcript": "please help me",
+        "phraseId": "66740a79244f4c305eb28fa1",
+        "phraseNumber": 4,
+        "_id": "6675b1b1aef97eac3b5859b5"
+    },
+    {
+        "videoId": "66769e0e9cb47e5d1fc79949",
+        "videoPath": "upload/videos/vansh_66740d7ebcb54392537d199a/1719049742255_5_66769e0e9cb47e5d1fc79949.mp4",
+        "transcript": "i need to use the bathroom",
+        "phraseId": "66740a79244f4c305eb28fa4",
+        "phraseNumber": 5,
+        "_id": "66769e0e9cb47e5d1fc79953"
+    },
+    {
+        "videoId": "66769ebf9cb47e5d1fc7996c",
+        "videoPath": "upload/videos/vansh_66740d7ebcb54392537d199a/1719049919899_6_66769ebf9cb47e5d1fc7996c.mp4",
+        "transcript": "can you call the doctor",
+        "phraseId": "66740a79244f4c305eb28fa7",
+        "phraseNumber": 6,
+        "_id": "66769ec09cb47e5d1fc79977"
+    },
+    {
+        "videoId": "66769ee09cb47e5d1fc79993",
+        "videoPath": "upload/videos/vansh_66740d7ebcb54392537d199a/1719049952043_7_66769ee09cb47e5d1fc79993.mp4",
+        "transcript": "i need to rest",
+        "phraseId": "66740a79244f4c305eb28faa",
+        "phraseNumber": 7,
+        "_id": "66769ee09cb47e5d1fc7999f"
+    },
+    {
+        "videoId": "66769f729cb47e5d1fc799be",
+        "videoPath": "upload/videos/vansh_66740d7ebcb54392537d199a/1719050098459_8_66769f729cb47e5d1fc799be.mp4",
+        "transcript": "i need my phone",
+        "phraseId": "66740a79244f4c305eb28fad",
+        "phraseNumber": 8,
+        "_id": "66769f729cb47e5d1fc799cb"
+    },
+    {
+        "videoId": "6676a6389cb47e5d1fc799ed",
+        "videoPath": "upload/videos/vansh_66740d7ebcb54392537d199a/1719051832589_9_6676a6389cb47e5d1fc799ed.mp4",
+        "transcript": "i am uncomfortable",
+        "phraseId": "66740a79244f4c305eb28fb0",
+        "phraseNumber": 9,
+        "_id": "6676a6389cb47e5d1fc799fb"
+    },
+    {
+        "videoId": "6676a6509cb47e5d1fc79a20",
+        "videoPath": "upload/videos/vansh_66740d7ebcb54392537d199a/1719051856295_10_6676a6509cb47e5d1fc79a20.mp4",
+        "transcript": "i am in pain",
+        "phraseId": "66740a79244f4c305eb28fb3",
+        "phraseNumber": 10,
+        "_id": "6676a6509cb47e5d1fc79a2f"
+    },
+    {
+        "videoId": "6676a6df9cb47e5d1fc79a57",
+        "videoPath": "upload/videos/vansh_66740d7ebcb54392537d199a/1719051999617_11_6676a6df9cb47e5d1fc79a57.mp4",
+        "transcript": "turn on the light",
+        "phraseId": "66740a79244f4c305eb28fb6",
+        "phraseNumber": 11,
+        "_id": "6676a6df9cb47e5d1fc79a67"
+    },
+    {
+        "videoId": "6676a6eb9cb47e5d1fc79a92",
+        "videoPath": "upload/videos/vansh_66740d7ebcb54392537d199a/1719052011460_12_6676a6eb9cb47e5d1fc79a92.mp4",
+        "transcript": "turn off the light",
+        "phraseId": "66740a7a244f4c305eb28fb9",
+        "phraseNumber": 12,
+        "_id": "6676a6eb9cb47e5d1fc79aa3"
+    },
+    {
+        "videoId": "6676a7029cb47e5d1fc79ad1",
+        "videoPath": "upload/videos/vansh_66740d7ebcb54392537d199a/1719052034645_13_6676a7029cb47e5d1fc79ad1.mp4",
+        "transcript": "please close the door",
+        "phraseId": "66740a7a244f4c305eb28fbc",
+        "phraseNumber": 13,
+        "_id": "6676a7029cb47e5d1fc79ae3"
+    },
+    {
+        "videoId": "6676a71a9cb47e5d1fc79b14",
+        "videoPath": "upload/videos/vansh_66740d7ebcb54392537d199a/1719052058790_14_6676a71a9cb47e5d1fc79b14.mp4",
+        "transcript": "how are you",
+        "phraseId": "66740a7a244f4c305eb28fbf",
+        "phraseNumber": 14,
+        "_id": "6676a71a9cb47e5d1fc79b27"
+    },
+    {
+        "videoId": "6676a7e59cb47e5d1fc79b5b",
+        "videoPath": "upload/videos/vansh_66740d7ebcb54392537d199a/1719052261171_15_6676a7e59cb47e5d1fc79b5b.mp4",
+        "transcript": "i am fine",
+        "phraseId": "66740a7a244f4c305eb28fc2",
+        "phraseNumber": 15,
+        "_id": "6676a7e59cb47e5d1fc79b6f"
+    },
+    {
+        "videoId": "6676a81c9cb47e5d1fc79ba6",
+        "videoPath": "upload/videos/vansh_66740d7ebcb54392537d199a/1719052316920_16_6676a81c9cb47e5d1fc79ba6.mp4",
+        "transcript": "can you move me",
+        "phraseId": "66740a7a244f4c305eb28fc5",
+        "phraseNumber": 16,
+        "_id": "6676a81d9cb47e5d1fc79bbb"
+    },
+    {
+        "videoId": "6676a8349cb47e5d1fc79bf5",
+        "videoPath": "upload/videos/vansh_66740d7ebcb54392537d199a/1719052340057_17_6676a8349cb47e5d1fc79bf5.mp4",
+        "transcript": "i am feeling cold",
+        "phraseId": "66740a7a244f4c305eb28fc8",
+        "phraseNumber": 17,
+        "_id": "6676a8349cb47e5d1fc79c0b"
+    },
+    {
+        "videoId": "6676a8439cb47e5d1fc79c48",
+        "videoPath": "upload/videos/vansh_66740d7ebcb54392537d199a/1719052355324_18_6676a8439cb47e5d1fc79c48.mp4",
+        "transcript": "i am feeling hot",
+        "phraseId": "66740a7a244f4c305eb28fcb",
+        "phraseNumber": 18,
+        "_id": "6676a8439cb47e5d1fc79c5f"
+    },
+    {
+        "videoId": "6676a85d9cb47e5d1fc79c9f",
+        "videoPath": "upload/videos/vansh_66740d7ebcb54392537d199a/1719052381238_19_6676a85d9cb47e5d1fc79c9f.mp4",
+        "transcript": "please open the window",
+        "phraseId": "66740a7a244f4c305eb28fce",
+        "phraseNumber": 19,
+        "_id": "6676a85d9cb47e5d1fc79cb7"
+    },
+    {
+        "videoId": "6676b1449cb47e5d1fc79cfa",
+        "videoPath": "upload/videos/vansh_66740d7ebcb54392537d199a/1719054660814_20_6676b1449cb47e5d1fc79cfa.mp4",
+        "transcript": "adjust my pillow",
+        "phraseId": "66740a7a244f4c305eb28fd1",
+        "phraseNumber": 20,
+        "_id": "6676b1449cb47e5d1fc79d13"
+    },
+    {
+        "videoId": "6676b18b9cb47e5d1fc79d59",
+        "videoPath": "upload/videos/vansh_66740d7ebcb54392537d199a/1719054731277_21_6676b18b9cb47e5d1fc79d59.mp4",
+        "transcript": "please change my position",
+        "phraseId": "66740a7a244f4c305eb28fd4",
+        "phraseNumber": 21,
+        "_id": "6676b18b9cb47e5d1fc79d73"
+    },
+    {
+        "videoId": "6676b1999cb47e5d1fc79dbc",
+        "videoPath": "upload/videos/vansh_66740d7ebcb54392537d199a/1719054745945_22_6676b1999cb47e5d1fc79dbc.mp4",
+        "transcript": "i need a blanket",
+        "phraseId": "66740a7a244f4c305eb28fd7",
+        "phraseNumber": 22,
+        "_id": "6676b19a9cb47e5d1fc79dd7"
+    },
+    {
+        "videoId": "6676b1aa9cb47e5d1fc79e23",
+        "videoPath": "upload/videos/vansh_66740d7ebcb54392537d199a/1719054762097_23_6676b1aa9cb47e5d1fc79e23.mp4",
+        "transcript": "i need a tissue",
+        "phraseId": "66740a7a244f4c305eb28fda",
+        "phraseNumber": 23,
+        "_id": "6676b1aa9cb47e5d1fc79e3f"
+    },
+    {
+        "videoId": "6676b2299cb47e5d1fc79e8e",
+        "videoPath": "upload/videos/vansh_66740d7ebcb54392537d199a/1719054889985_24_6676b2299cb47e5d1fc79e8e.mp4",
+        "transcript": "can you bring my bag",
+        "phraseId": "66740a7a244f4c305eb28fdd",
+        "phraseNumber": 24,
+        "_id": "6676b22a9cb47e5d1fc79eab"
+    },
+    {
+        "videoId": "6676b23f9cb47e5d1fc79efd",
+        "videoPath": "upload/videos/vansh_66740d7ebcb54392537d199a/1719054911406_25_6676b23f9cb47e5d1fc79efd.mp4",
+        "transcript": "can you massage my back",
+        "phraseId": "66740a7b244f4c305eb28fe0",
+        "phraseNumber": 25,
+        "_id": "6676b23f9cb47e5d1fc79f1b"
+    },
+    {
+        "videoId": "6676b24e9cb47e5d1fc79f70",
+        "videoPath": "upload/videos/vansh_66740d7ebcb54392537d199a/1719054926142_26_6676b24e9cb47e5d1fc79f70.mp4",
+        "transcript": "can you make some tea",
+        "phraseId": "66740a7b244f4c305eb28fe3",
+        "phraseNumber": 26,
+        "_id": "6676b24e9cb47e5d1fc79f8f"
+    },
+    {
+        "videoId": "6676b2609cb47e5d1fc79fe7",
+        "videoPath": "upload/videos/vansh_66740d7ebcb54392537d199a/1719054944006_27_6676b2609cb47e5d1fc79fe7.mp4",
+        "transcript": "what is the weather like",
+        "phraseId": "66740a7b244f4c305eb28fe6",
+        "phraseNumber": 27,
+        "_id": "6676b2609cb47e5d1fc7a007"
+    },
+    {
+        "videoId": "6676b2779cb47e5d1fc7a062",
+        "videoPath": "upload/videos/vansh_66740d7ebcb54392537d199a/1719054967474_28_6676b2779cb47e5d1fc7a062.mp4",
+        "transcript": "i would like some fresh air",
+        "phraseId": "66740a7b244f4c305eb28fe9",
+        "phraseNumber": 28,
+        "_id": "6676b2779cb47e5d1fc7a083"
+    },
+    {
+        "videoId": "6676b3259cb47e5d1fc7a0e1",
+        "videoPath": "upload/videos/vansh_66740d7ebcb54392537d199a/1719055141328_29_6676b3259cb47e5d1fc7a0e1.mp4",
+        "transcript": "please hold my hand",
+        "phraseId": "66740a7b244f4c305eb28fec",
+        "phraseNumber": 29,
+        "_id": "6676b3259cb47e5d1fc7a103"
+    },
+    {
+        "videoId": "6676b38d9cb47e5d1fc7a164",
+        "videoPath": "upload/videos/vansh_66740d7ebcb54392537d199a/1719055245928_30_6676b38d9cb47e5d1fc7a164.mp4",
+        "transcript": "can you put on some music",
+        "phraseId": "66740a7b244f4c305eb28fef",
+        "phraseNumber": 30,
+        "_id": "6676b38e9cb47e5d1fc7a187"
+    },
+    {
+        "videoId": "6676b3b59cb47e5d1fc7a1eb",
+        "videoPath": "upload/videos/vansh_66740d7ebcb54392537d199a/1719055285732_31_6676b3b59cb47e5d1fc7a1eb.mp4",
+        "transcript": "i need to talk to you",
+        "phraseId": "66740a7b244f4c305eb28ff2",
+        "phraseNumber": 31,
+        "_id": "6676b3b69cb47e5d1fc7a20f"
+    },
+    {
+        "videoId": "6676b4069cb47e5d1fc7a276",
+        "videoPath": "upload/videos/vansh_66740d7ebcb54392537d199a/1719055366167_32_6676b4069cb47e5d1fc7a276.mp4",
+        "transcript": "can you make a call for me",
+        "phraseId": "66740a7b244f4c305eb28ff5",
+        "phraseNumber": 32,
+        "_id": "6676b4069cb47e5d1fc7a29b"
+    },
+    {
+        "videoId": "6676b41a9cb47e5d1fc7a305",
+        "videoPath": "upload/videos/vansh_66740d7ebcb54392537d199a/1719055386367_33_6676b41a9cb47e5d1fc7a305.mp4",
+        "transcript": "i would like to write something",
+        "phraseId": "66740a7b244f4c305eb28ff8",
+        "phraseNumber": 33,
+        "_id": "6676b41a9cb47e5d1fc7a32b"
+    },
+    {
+        "videoId": "6676b4289cb47e5d1fc7a398",
+        "videoPath": "upload/videos/vansh_66740d7ebcb54392537d199a/1719055400998_34_6676b4289cb47e5d1fc7a398.mp4",
+        "transcript": "i need to rest my head",
+        "phraseId": "66740a7b244f4c305eb28ffb",
+        "phraseNumber": 34,
+        "_id": "6676b4299cb47e5d1fc7a3bf"
+    },
+    {
+        "videoId": "6676b43d9cb47e5d1fc7a42f",
+        "videoPath": "upload/videos/vansh_66740d7ebcb54392537d199a/1719055421038_35_6676b43d9cb47e5d1fc7a42f.mp4",
+        "transcript": "i need to change my clothes",
+        "phraseId": "66740a7b244f4c305eb28ffe",
+        "phraseNumber": 35,
+        "_id": "6676b43d9cb47e5d1fc7a457"
+    },
+    {
+        "videoId": "6676b4599cb47e5d1fc7a4ca",
+        "videoPath": "upload/videos/vansh_66740d7ebcb54392537d199a/1719055449149_36_6676b4599cb47e5d1fc7a4ca.mp4",
+        "transcript": "can you help me with my shoes",
+        "phraseId": "66740a7b244f4c305eb29001",
+        "phraseNumber": 36,
+        "_id": "6676b4599cb47e5d1fc7a4f3"
+    },
+    {
+        "videoId": "6676b49c9cb47e5d1fc7a569",
+        "videoPath": "upload/videos/vansh_66740d7ebcb54392537d199a/1719055516858_37_6676b49c9cb47e5d1fc7a569.mp4",
+        "transcript": "i need some privacy",
+        "phraseId": "66740a7b244f4c305eb29004",
+        "phraseNumber": 37,
+        "_id": "6676b49c9cb47e5d1fc7a593"
+    },
+    {
+        "videoId": "6676b4d39cb47e5d1fc7a60c",
+        "videoPath": "upload/videos/vansh_66740d7ebcb54392537d199a/1719055571066_38_6676b4d39cb47e5d1fc7a60c.mp4",
+        "transcript": "can you bring me some fruit",
+        "phraseId": "66740a7b244f4c305eb29007",
+        "phraseNumber": 38,
+        "_id": "6676b4d39cb47e5d1fc7a637"
+    },
+    {
+        "videoId": "6676b4df9cb47e5d1fc7a6b3",
+        "videoPath": "upload/videos/vansh_66740d7ebcb54392537d199a/1719055583413_39_6676b4df9cb47e5d1fc7a6b3.mp4",
+        "transcript": "i need to brush my teeth",
+        "phraseId": "66740a7c244f4c305eb2900a",
+        "phraseNumber": 39,
+        "_id": "6676b4df9cb47e5d1fc7a6df"
+    },
+    {
+        "videoId": "6676b4f19cb47e5d1fc7a75e",
+        "videoPath": "upload/videos/vansh_66740d7ebcb54392537d199a/1719055601057_40_6676b4f19cb47e5d1fc7a75e.mp4",
+        "transcript": "i need a sip of water",
+        "phraseId": "66740a7c244f4c305eb2900d",
+        "phraseNumber": 40,
+        "_id": "6676b4f19cb47e5d1fc7a78b"
+    },
+    {
+        "videoId": "6676b5199cb47e5d1fc7a80d",
+        "videoPath": "upload/videos/vansh_66740d7ebcb54392537d199a/1719055641316_41_6676b5199cb47e5d1fc7a80d.mp4",
+        "transcript": "i would like to see some photos",
+        "phraseId": "66740a7c244f4c305eb29010",
+        "phraseNumber": 41,
+        "_id": "6676b5199cb47e5d1fc7a83b"
+    },
+    {
+        "videoId": "6676b53d9cb47e5d1fc7a8c0",
+        "videoPath": "upload/videos/vansh_66740d7ebcb54392537d199a/1719055677141_42_6676b53d9cb47e5d1fc7a8c0.mp4",
+        "transcript": "i need a handkerchief",
+        "phraseId": "66740a7c244f4c305eb29013",
+        "phraseNumber": 42,
+        "_id": "6676b53d9cb47e5d1fc7a8ef"
+    },
+    {
+        "videoId": "6676b5489cb47e5d1fc7a977",
+        "videoPath": "upload/videos/vansh_66740d7ebcb54392537d199a/1719055688869_43_6676b5489cb47e5d1fc7a977.mp4",
+        "transcript": "i need my charger",
+        "phraseId": "66740a7c244f4c305eb29016",
+        "phraseNumber": 43,
+        "_id": "6676b5489cb47e5d1fc7a9a7"
+    },
+    {
+        "videoId": "6676b5579cb47e5d1fc7aa32",
+        "videoPath": "upload/videos/vansh_66740d7ebcb54392537d199a/1719055703956_44_6676b5579cb47e5d1fc7aa32.mp4",
+        "transcript": "can you adjust the curtains",
+        "phraseId": "66740a7c244f4c305eb29019",
+        "phraseNumber": 44,
+        "_id": "6676b5589cb47e5d1fc7aa63"
+    },
+    {
+        "videoId": "6676b5859cb47e5d1fc7aaf1",
+        "videoPath": "upload/videos/vansh_66740d7ebcb54392537d199a/1719055749264_45_6676b5859cb47e5d1fc7aaf1.mp4",
+        "transcript": "can you turn on the fan",
+        "phraseId": "66740a7c244f4c305eb2901c",
+        "phraseNumber": 45,
+        "_id": "6676b5859cb47e5d1fc7ab23"
+    },
+    {
+        "videoId": "6676b5909cb47e5d1fc7abb4",
+        "videoPath": "upload/videos/vansh_66740d7ebcb54392537d199a/1719055760038_46_6676b5909cb47e5d1fc7abb4.mp4",
+        "transcript": "i need some peace and quiet",
+        "phraseId": "66740a7c244f4c305eb2901f",
+        "phraseNumber": 46,
+        "_id": "6676b5909cb47e5d1fc7abe7"
+    },
+    {
+        "videoId": "6676b5d69cb47e5d1fc7ac7b",
+        "videoPath": "upload/videos/vansh_66740d7ebcb54392537d199a/1719055830665_47_6676b5d69cb47e5d1fc7ac7b.mp4",
+        "transcript": "i am feeling anxious",
+        "phraseId": "66740a7c244f4c305eb29022",
+        "phraseNumber": 47,
+        "_id": "6676b5d69cb47e5d1fc7acaf"
+    },
+    {
+        "videoId": "6676b5e49cb47e5d1fc7ad46",
+        "videoPath": "upload/videos/vansh_66740d7ebcb54392537d199a/1719055844132_48_6676b5e49cb47e5d1fc7ad46.mp4",
+        "transcript": "can you dim the lights",
+        "phraseId": "66740a7c244f4c305eb29025",
+        "phraseNumber": 48,
+        "_id": "6676b5e49cb47e5d1fc7ad7b"
+    },
+    {
+        "videoId": "6676b5f39cb47e5d1fc7ae15",
+        "videoPath": "upload/videos/vansh_66740d7ebcb54392537d199a/1719055859416_49_6676b5f39cb47e5d1fc7ae15.mp4",
+        "transcript": "i need a moment alone",
+        "phraseId": "66740a7c244f4c305eb29028",
+        "phraseNumber": 49,
+        "_id": "6676b5f39cb47e5d1fc7ae4b"
+    },
+    {
+        "videoId": "6676b6109cb47e5d1fc7aee8",
+        "videoPath": "upload/videos/vansh_66740d7ebcb54392537d199a/1719055888264_50_6676b6109cb47e5d1fc7aee8.mp4",
+        "transcript": "it is good to see you again",
+        "phraseId": "66740a7c244f4c305eb2902b",
+        "phraseNumber": 50,
+        "_id": "6676b6109cb47e5d1fc7af1f"
+    },
+    {
+        "videoId": "6676b6239cb47e5d1fc7afbf",
+        "videoPath": "upload/videos/vansh_66740d7ebcb54392537d199a/1719055907349_51_6676b6239cb47e5d1fc7afbf.mp4",
+        "transcript": "goodbye. take care of yourself.",
+        "phraseId": "66740a7c244f4c305eb2902e",
+        "phraseNumber": 51,
+        "_id": "6676b6239cb47e5d1fc7aff7"
+    },
+    {
+        "videoId": "6676b6689cb47e5d1fc7b09a",
+        "videoPath": "upload/videos/vansh_66740d7ebcb54392537d199a/1719055976769_52_6676b6689cb47e5d1fc7b09a.mp4",
+        "transcript": "it is getting late. i have to go now.",
+        "phraseId": "66740a7d244f4c305eb29031",
+        "phraseNumber": 52,
+        "_id": "6676b6689cb47e5d1fc7b0d3"
+    },
+    {
+        "videoId": "6676b6749cb47e5d1fc7b179",
+        "videoPath": "upload/videos/vansh_66740d7ebcb54392537d199a/1719055988096_53_6676b6749cb47e5d1fc7b179.mp4",
+        "transcript": "can you read the news to me.",
+        "phraseId": "66740a7d244f4c305eb29034",
+        "phraseNumber": 53,
+        "_id": "6676b6749cb47e5d1fc7b1b3"
+    },
+    {
+        "videoId": "6676b6829cb47e5d1fc7b25c",
+        "videoPath": "upload/videos/vansh_66740d7ebcb54392537d199a/1719056002833_54_6676b6829cb47e5d1fc7b25c.mp4",
+        "transcript": "please set the alarm",
+        "phraseId": "66740a7d244f4c305eb29037",
+        "phraseNumber": 54,
+        "_id": "6676b6829cb47e5d1fc7b297"
+    },
+    {
+        "videoId": "6676b6969cb47e5d1fc7b343",
+        "videoPath": "upload/videos/vansh_66740d7ebcb54392537d199a/1719056022291_55_6676b6969cb47e5d1fc7b343.mp4",
+        "transcript": "i need a napkin",
+        "phraseId": "66740a7d244f4c305eb2903a",
+        "phraseNumber": 55,
+        "_id": "6676b6969cb47e5d1fc7b37f"
+    },
+    {
+        "videoId": "6676bba89cb47e5d1fc7b42e",
+        "videoPath": "upload/videos/vansh_66740d7ebcb54392537d199a/1719057320328_56_6676bba89cb47e5d1fc7b42e.mp4",
+        "transcript": "what is the date today.",
+        "phraseId": "66740a7d244f4c305eb2903d",
+        "phraseNumber": 56,
+        "_id": "6676bba89cb47e5d1fc7b46b"
+    },
+    {
+        "videoId": "6676bbbc9cb47e5d1fc7b51d",
+        "videoPath": "upload/videos/vansh_66740d7ebcb54392537d199a/1719057340103_57_6676bbbc9cb47e5d1fc7b51d.mp4",
+        "transcript": "how was your day",
+        "phraseId": "66740b34f3ba042f96bed5c0",
+        "phraseNumber": 57,
+        "_id": "6676bbbc9cb47e5d1fc7b55b"
+    },
+    {
+        "videoId": "6676bbce9cb47e5d1fc7b610",
+        "videoPath": "upload/videos/vansh_66740d7ebcb54392537d199a/1719057358043_58_6676bbce9cb47e5d1fc7b610.mp4",
+        "transcript": "did you have fun",
+        "phraseId": "66740b34f3ba042f96bed5c3",
+        "phraseNumber": 58,
+        "_id": "6676bbce9cb47e5d1fc7b64f"
+    },
+    {
+        "videoId": "6676bbf89cb47e5d1fc7b707",
+        "videoPath": "upload/videos/vansh_66740d7ebcb54392537d199a/1719057400416_59_6676bbf89cb47e5d1fc7b707.mp4",
+        "transcript": "come give me a hug",
+        "phraseId": "66740b34f3ba042f96bed5c6",
+        "phraseNumber": 59,
+        "_id": "6676bbf89cb47e5d1fc7b747"
+    },
+    {
+        "videoId": "6676bc289cb47e5d1fc7b802",
+        "videoPath": "upload/videos/vansh_66740d7ebcb54392537d199a/1719057448111_60_6676bc289cb47e5d1fc7b802.mp4",
+        "transcript": "let us play a game",
+        "phraseId": "66740b34f3ba042f96bed5c9",
+        "phraseNumber": 60,
+        "_id": "6676bc289cb47e5d1fc7b843"
+    },
+    {
+        "videoId": "6676bc329cb47e5d1fc7b901",
+        "videoPath": "upload/videos/vansh_66740d7ebcb54392537d199a/1719057458666_61_6676bc329cb47e5d1fc7b901.mp4",
+        "transcript": "time for bed",
+        "phraseId": "66740b34f3ba042f96bed5cc",
+        "phraseNumber": 61,
+        "_id": "6676bc329cb47e5d1fc7b943"
+    },
+    {
+        "videoId": "6676bc609cb47e5d1fc7ba04",
+        "videoPath": "upload/videos/vansh_66740d7ebcb54392537d199a/1719057504049_62_6676bc609cb47e5d1fc7ba04.mp4",
+        "transcript": "do you want a story",
+        "phraseId": "66740b35f3ba042f96bed5cf",
+        "phraseNumber": 62,
+        "_id": "6676bc609cb47e5d1fc7ba47"
+    },
+    {
+        "videoId": "6676bc7d9cb47e5d1fc7bb0b",
+        "videoPath": "upload/videos/vansh_66740d7ebcb54392537d199a/1719057533687_63_6676bc7d9cb47e5d1fc7bb0b.mp4",
+        "transcript": "what did you learn today",
+        "phraseId": "66740b35f3ba042f96bed5d2",
+        "phraseNumber": 63,
+        "_id": "6676bc7d9cb47e5d1fc7bb4f"
+    },
+    {
+        "videoId": "6676bc8d9cb47e5d1fc7bc16",
+        "videoPath": "upload/videos/vansh_66740d7ebcb54392537d199a/1719057549085_64_6676bc8d9cb47e5d1fc7bc16.mp4",
+        "transcript": "are you hungry",
+        "phraseId": "66740b35f3ba042f96bed5d5",
+        "phraseNumber": 64,
+        "_id": "6676bc8d9cb47e5d1fc7bc5b"
+    },
+    {
+        "videoId": "6676bc9b9cb47e5d1fc7bd25",
+        "videoPath": "upload/videos/vansh_66740d7ebcb54392537d199a/1719057563341_65_6676bc9b9cb47e5d1fc7bd25.mp4",
+        "transcript": "let us draw together",
+        "phraseId": "66740b35f3ba042f96bed5d8",
+        "phraseNumber": 65,
+        "_id": "6676bc9b9cb47e5d1fc7bd6b"
+    },
+    {
+        "videoId": "6676bca79cb47e5d1fc7be38",
+        "videoPath": "upload/videos/vansh_66740d7ebcb54392537d199a/1719057575934_66_6676bca79cb47e5d1fc7be38.mp4",
+        "transcript": "do you need help",
+        "phraseId": "66740b35f3ba042f96bed5db",
+        "phraseNumber": 66,
+        "_id": "6676bca89cb47e5d1fc7be7f"
+    },
+    {
+        "videoId": "6676bcb49cb47e5d1fc7bf4f",
+        "videoPath": "upload/videos/vansh_66740d7ebcb54392537d199a/1719057588767_67_6676bcb49cb47e5d1fc7bf4f.mp4",
+        "transcript": "can you bring me your toy",
+        "phraseId": "66740b35f3ba042f96bed5de",
+        "phraseNumber": 67,
+        "_id": "6676bcb49cb47e5d1fc7bf97"
+    },
+    {
+        "videoId": "6676bcbd9cb47e5d1fc7c06a",
+        "videoPath": "upload/videos/vansh_66740d7ebcb54392537d199a/1719057597952_68_6676bcbd9cb47e5d1fc7c06a.mp4",
+        "transcript": "you are doing great",
+        "phraseId": "66740b35f3ba042f96bed5e1",
+        "phraseNumber": 68,
+        "_id": "6676bcbe9cb47e5d1fc7c0b3"
+    },
+    {
+        "videoId": "6676bcce9cb47e5d1fc7c189",
+        "videoPath": "upload/videos/vansh_66740d7ebcb54392537d199a/1719057614556_69_6676bcce9cb47e5d1fc7c189.mp4",
+        "transcript": "i am proud of you",
+        "phraseId": "66740b35f3ba042f96bed5e4",
+        "phraseNumber": 69,
+        "_id": "6676bcce9cb47e5d1fc7c1d3"
+    },
+    {
+        "videoId": "6676bce89cb47e5d1fc7c2ac",
+        "videoPath": "upload/videos/vansh_66740d7ebcb54392537d199a/1719057640973_70_6676bce89cb47e5d1fc7c2ac.mp4",
+        "transcript": "do you want to watch a cartoon",
+        "phraseId": "66740b35f3ba042f96bed5e7",
+        "phraseNumber": 70,
+        "_id": "6676bce99cb47e5d1fc7c2f7"
+    },
+    {
+        "videoId": "6676bcf69cb47e5d1fc7c3d3",
+        "videoPath": "upload/videos/vansh_66740d7ebcb54392537d199a/1719057654227_71_6676bcf69cb47e5d1fc7c3d3.mp4",
+        "transcript": "what do you want to eat",
+        "phraseId": "66740b35f3ba042f96bed5ea",
+        "phraseNumber": 71,
+        "_id": "6676bcf69cb47e5d1fc7c41f"
+    },
+    {
+        "videoId": "6676bd049cb47e5d1fc7c4fe",
+        "videoPath": "upload/videos/vansh_66740d7ebcb54392537d199a/1719057668942_72_6676bd049cb47e5d1fc7c4fe.mp4",
+        "transcript": "let us go outside",
+        "phraseId": "66740b35f3ba042f96bed5ed",
+        "phraseNumber": 72,
+        "_id": "6676bd059cb47e5d1fc7c54b"
+    },
+    {
+        "videoId": "6676bd0f9cb47e5d1fc7c62d",
+        "videoPath": "upload/videos/vansh_66740d7ebcb54392537d199a/1719057679825_73_6676bd0f9cb47e5d1fc7c62d.mp4",
+        "transcript": "it is time for a nap",
+        "phraseId": "66740b35f3ba042f96bed5f0",
+        "phraseNumber": 73,
+        "_id": "6676bd0f9cb47e5d1fc7c67b"
+    },
+    {
+        "videoId": "6676bd1b9cb47e5d1fc7c760",
+        "videoPath": "upload/videos/vansh_66740d7ebcb54392537d199a/1719057691336_74_6676bd1b9cb47e5d1fc7c760.mp4",
+        "transcript": "are you feeling okay",
+        "phraseId": "66740b35f3ba042f96bed5f3",
+        "phraseNumber": 74,
+        "_id": "6676bd1b9cb47e5d1fc7c7af"
+    },
+    {
+        "videoId": "6676bd259cb47e5d1fc7c897",
+        "videoPath": "upload/videos/vansh_66740d7ebcb54392537d199a/1719057701735_75_6676bd259cb47e5d1fc7c897.mp4",
+        "transcript": "let us play with your toys",
+        "phraseId": "66740b35f3ba042f96bed5f6",
+        "phraseNumber": 75,
+        "_id": "6676bd259cb47e5d1fc7c8e7"
+    },
+    {
+        "videoId": "6676bd309cb47e5d1fc7c9d2",
+        "videoPath": "upload/videos/vansh_66740d7ebcb54392537d199a/1719057712399_76_6676bd309cb47e5d1fc7c9d2.mp4",
+        "transcript": "show me your favourite game.",
+        "phraseId": "66740b36f3ba042f96bed5f9",
+        "phraseNumber": 76,
+        "_id": "6676bd309cb47e5d1fc7ca23"
+    },
+    {
+        "videoId": "6676bd639cb47e5d1fc7cb11",
+        "videoPath": "upload/videos/vansh_66740d7ebcb54392537d199a/1719057763433_77_6676bd639cb47e5d1fc7cb11.mp4",
+        "transcript": "can you tell me about your day.",
+        "phraseId": "66740b36f3ba042f96bed5fc",
+        "phraseNumber": 77,
+        "_id": "6676bd639cb47e5d1fc7cb63"
+    },
+    {
+        "videoId": "6676bd9b9cb47e5d1fc7cc54",
+        "videoPath": "upload/videos/vansh_66740d7ebcb54392537d199a/1719057819897_78_6676bd9b9cb47e5d1fc7cc54.mp4",
+        "transcript": "what did you do in school today.",
+        "phraseId": "66740b36f3ba042f96bed5ff",
+        "phraseNumber": 78,
+        "_id": "6676bd9c9cb47e5d1fc7cca7"
+    },
+    {
+        "videoId": "6676bdae9cb47e5d1fc7cd9b",
+        "videoPath": "upload/videos/vansh_66740d7ebcb54392537d199a/1719057838224_79_6676bdae9cb47e5d1fc7cd9b.mp4",
+        "transcript": "do you want to go and play outside.",
+        "phraseId": "66740b36f3ba042f96bed602",
+        "phraseNumber": 79,
+        "_id": "6676bdae9cb47e5d1fc7cdef"
+    },
+    {
+        "videoId": "6676bdc69cb47e5d1fc7cee6",
+        "videoPath": "upload/videos/vansh_66740d7ebcb54392537d199a/1719057862682_80_6676bdc69cb47e5d1fc7cee6.mp4",
+        "transcript": "can you draw a picture for me.",
+        "phraseId": "66740b36f3ba042f96bed605",
+        "phraseNumber": 80,
+        "_id": "6676bdc69cb47e5d1fc7cf3b"
+    },
+    {
+        "videoId": "6676bdd79cb47e5d1fc7d035",
+        "videoPath": "upload/videos/vansh_66740d7ebcb54392537d199a/1719057879007_81_6676bdd79cb47e5d1fc7d035.mp4",
+        "transcript": "what did you dream about.",
+        "phraseId": "66740b36f3ba042f96bed608",
+        "phraseNumber": 81,
+        "_id": "6676bdd79cb47e5d1fc7d08b"
+    },
+    {
+        "videoId": "6676bde69cb47e5d1fc7d188",
+        "videoPath": "upload/videos/vansh_66740d7ebcb54392537d199a/1719057894348_82_6676bde69cb47e5d1fc7d188.mp4",
+        "transcript": "let us watch a movie",
+        "phraseId": "66740b36f3ba042f96bed60b",
+        "phraseNumber": 82,
+        "_id": "6676bde69cb47e5d1fc7d1df"
+    },
+    {
+        "videoId": "6676bdf19cb47e5d1fc7d2df",
+        "videoPath": "upload/videos/vansh_66740d7ebcb54392537d199a/1719057905220_83_6676bdf19cb47e5d1fc7d2df.mp4",
+        "transcript": "do you want to have a picnic",
+        "phraseId": "66740b36f3ba042f96bed60e",
+        "phraseNumber": 83,
+        "_id": "6676bdf19cb47e5d1fc7d337"
+    },
+    {
+        "videoId": "6676bdfd9cb47e5d1fc7d43a",
+        "videoPath": "upload/videos/vansh_66740d7ebcb54392537d199a/1719057917671_84_6676bdfd9cb47e5d1fc7d43a.mp4",
+        "transcript": "let us talk about your friends",
+        "phraseId": "66740b36f3ba042f96bed611",
+        "phraseNumber": 84,
+        "_id": "6676bdfd9cb47e5d1fc7d493"
+    },
+    {
+        "videoId": "6676be0f9cb47e5d1fc7d599",
+        "videoPath": "upload/videos/vansh_66740d7ebcb54392537d199a/1719057935899_85_6676be0f9cb47e5d1fc7d599.mp4",
+        "transcript": "do you want to play with your doll.",
+        "phraseId": "66740b36f3ba042f96bed614",
+        "phraseNumber": 85,
+        "_id": "6676be0f9cb47e5d1fc7d5f3"
+    },
+    {
+        "videoId": "6676be249cb47e5d1fc7d6fc",
+        "videoPath": "upload/videos/vansh_66740d7ebcb54392537d199a/1719057956245_86_6676be249cb47e5d1fc7d6fc.mp4",
+        "transcript": "can you tell me a joke.",
+        "phraseId": "66740b36f3ba042f96bed617",
+        "phraseNumber": 86,
+        "_id": "6676be249cb47e5d1fc7d757"
+    },
+    {
+        "videoId": "6676be449cb47e5d1fc7d863",
+        "videoPath": "upload/videos/vansh_66740d7ebcb54392537d199a/1719057988995_87_6676be449cb47e5d1fc7d863.mp4",
+        "transcript": "let us play with your car",
+        "phraseId": "66740b36f3ba042f96bed61a",
+        "phraseNumber": 87,
+        "_id": "6676be459cb47e5d1fc7d8bf"
+    },
+    {
+        "videoId": "6676be529cb47e5d1fc7d9ce",
+        "videoPath": "upload/videos/vansh_66740d7ebcb54392537d199a/1719058002472_88_6676be529cb47e5d1fc7d9ce.mp4",
+        "transcript": "what is your favourite food",
+        "phraseId": "66740b36f3ba042f96bed61d",
+        "phraseNumber": 88,
+        "_id": "6676be529cb47e5d1fc7da2b"
+    },
+    {
+        "videoId": "6676be6a9cb47e5d1fc7db3d",
+        "videoPath": "upload/videos/vansh_66740d7ebcb54392537d199a/1719058026974_89_6676be6a9cb47e5d1fc7db3d.mp4",
+        "transcript": "let us play catch",
+        "phraseId": "66740b36f3ba042f96bed620",
+        "phraseNumber": 89,
+        "_id": "6676be6b9cb47e5d1fc7db9b"
+    },
+    {
+        "videoId": "6676be789cb47e5d1fc7dcb0",
+        "videoPath": "upload/videos/vansh_66740d7ebcb54392537d199a/1719058040539_90_6676be789cb47e5d1fc7dcb0.mp4",
+        "transcript": "can you count to ten",
+        "phraseId": "66740b37f3ba042f96bed623",
+        "phraseNumber": 90,
+        "_id": "6676be789cb47e5d1fc7dd0f"
+    },
+    {
+        "videoId": "6676be859cb47e5d1fc7de27",
+        "videoPath": "upload/videos/vansh_66740d7ebcb54392537d199a/1719058053027_91_6676be859cb47e5d1fc7de27.mp4",
+        "transcript": "where did you go",
+        "phraseId": "66740b37f3ba042f96bed626",
+        "phraseNumber": 91,
+        "_id": "6676be859cb47e5d1fc7de87"
+    },
+    {
+        "videoId": "6676be939cb47e5d1fc7dfa2",
+        "videoPath": "upload/videos/vansh_66740d7ebcb54392537d199a/1719058067915_92_6676be939cb47e5d1fc7dfa2.mp4",
+        "transcript": "please sit down and talk to me",
+        "phraseId": "66740b37f3ba042f96bed629",
+        "phraseNumber": 92,
+        "_id": "6676be949cb47e5d1fc7e003"
+    },
+    {
+        "videoId": "6676beae9cb47e5d1fc7e121",
+        "videoPath": "upload/videos/vansh_66740d7ebcb54392537d199a/1719058094952_93_6676beae9cb47e5d1fc7e121.mp4",
+        "transcript": "let me drive you to school",
+        "phraseId": "66740b37f3ba042f96bed62c",
+        "phraseNumber": 93,
+        "_id": "6676beaf9cb47e5d1fc7e183"
+    },
+    {
+        "videoId": "6676becc9cb47e5d1fc7e2a4",
+        "videoPath": "upload/videos/vansh_66740d7ebcb54392537d199a/1719058124332_94_6676becc9cb47e5d1fc7e2a4.mp4",
+        "transcript": "let us read a book together",
+        "phraseId": "66740b37f3ba042f96bed62f",
+        "phraseNumber": 94,
+        "_id": "6676becc9cb47e5d1fc7e307"
+    },
+    {
+        "videoId": "6676beda9cb47e5d1fc7e42b",
+        "videoPath": "upload/videos/vansh_66740d7ebcb54392537d199a/1719058138542_95_6676beda9cb47e5d1fc7e42b.mp4",
+        "transcript": "do you want to help me cook",
+        "phraseId": "66740b37f3ba042f96bed632",
+        "phraseNumber": 95,
+        "_id": "6676beda9cb47e5d1fc7e48f"
+    },
+    {
+        "videoId": "6676bee99cb47e5d1fc7e5b6",
+        "videoPath": "upload/videos/vansh_66740d7ebcb54392537d199a/1719058153696_96_6676bee99cb47e5d1fc7e5b6.mp4",
+        "transcript": "do you want to go to the park",
+        "phraseId": "66740b37f3ba042f96bed635",
+        "phraseNumber": 96,
+        "_id": "6676bee99cb47e5d1fc7e61b"
+    },
+    {
+        "videoId": "6676befa9cb47e5d1fc7e745",
+        "videoPath": "upload/videos/vansh_66740d7ebcb54392537d199a/1719058170650_97_6676befa9cb47e5d1fc7e745.mp4",
+        "transcript": "what did you see today",
+        "phraseId": "66740b37f3ba042f96bed638",
+        "phraseNumber": 97,
+        "_id": "6676befa9cb47e5d1fc7e7ab"
+    },
+    {
+        "videoId": "6676bf099cb47e5d1fc7e8d8",
+        "videoPath": "upload/videos/vansh_66740d7ebcb54392537d199a/1719058185559_98_6676bf099cb47e5d1fc7e8d8.mp4",
+        "transcript": "can you make a funny face",
+        "phraseId": "66740b37f3ba042f96bed63b",
+        "phraseNumber": 98,
+        "_id": "6676bf099cb47e5d1fc7e93f"
+    },
+    {
+        "videoId": "6676bf1c9cb47e5d1fc7ea6f",
+        "videoPath": "upload/videos/vansh_66740d7ebcb54392537d199a/1719058204486_99_6676bf1c9cb47e5d1fc7ea6f.mp4",
+        "transcript": "let us do a puzzle",
+        "phraseId": "66740b37f3ba042f96bed63e",
+        "phraseNumber": 99,
+        "_id": "6676bf1c9cb47e5d1fc7ead7"
+    }
+]

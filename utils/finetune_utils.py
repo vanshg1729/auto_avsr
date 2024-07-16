@@ -61,7 +61,7 @@ def finetune_encoders(model):
 finetune_funcs = {
     "full": finetune_full,
     "encoder": finetune_encoder,
+    "encoders": finetune_encoders,
     "decoder": finetune_decoder,
     "ctc": finetune_ctc,
-    "encoders": finetune_encoders
 }

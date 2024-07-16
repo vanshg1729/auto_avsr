@@ -20,11 +20,12 @@ def main(cfg):
     speaker = cfg.speaker
     train_size = cfg.train_size
     finetune_type = cfg.finetune
+    print(f"{cfg.finetune = }")
     finetune_func = finetune_funcs[finetune_type]
 
     project_name = "auto_avsr_phrase_finetuning"
-    # run_name = f"{speaker}_{finetune_type}_finetuning"
-    run_name = f"{speaker}_freeze_frontend3D_finetuning"
+    run_name = f"{speaker}_{finetune_type}_finetuning_default"
+    # run_name = f"{speaker}_freeze_frontend_finetuning_default"
     cfg.log_folder = os.path.join(cfg.logging_dir, f"{project_name}/{run_name}")
     cfg.exp_dir = cfg.log_folder
     cfg.trainer.default_root_dir = cfg.log_folder
@@ -62,8 +63,7 @@ def main(cfg):
         loggers.append(wandb_logger)
 
     modelmodule = ModelModule(cfg)
-    # finetune_func(modelmodule.model)
-    freeze_frontend3D(modelmodule.model)
+    finetune_func(modelmodule.model)
     # freeze_frontend(modelmodule.model)
 
     print(f"{cfg.trainer = }")
