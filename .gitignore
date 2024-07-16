@@ -15,4 +15,5 @@ outputs/
 **/datasets
 **/WildVSR
 **/mooc
+**/images
 **/checkpoints

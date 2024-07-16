@@ -7,6 +7,7 @@ import os
 import pickle
 import shutil
 import warnings
+import sys
 
 import ffmpeg
 from data.data_module import AVSRDataLoader
@@ -21,7 +22,7 @@ parser = argparse.ArgumentParser(description="Phrases Preprocessing")
 parser.add_argument(
     "--data-dir",
     type=str,
-    default='/ssd_scratch/cvit/vanshg/vansh_phrases',
+    default='/ssd_scratch/cvit/vanshg/phrases_dataset/akshat_phrases',
     help="Directory of original dataset",
 )
 parser.add_argument(
@@ -39,7 +40,7 @@ parser.add_argument(
 parser.add_argument(
     "--root-dir",
     type=str,
-    default='/ssd_scratch/cvit/vanshg/vansh_phrases/',
+    default='/ssd_scratch/cvit/vanshg/phrases_dataset/akshat_phrases',
     help="Root directory of preprocessed dataset",
 )
 parser.add_argument(
@@ -84,9 +85,9 @@ vid_dataloader = AVSRDataLoader(
 )
 seg_vid_len = seg_duration * 25
 
-def get_gt_text(src_dir, fname):
+def get_gt_text(fname):
     punctuation = string.punctuation.replace("'", "")
-    src_txt_filename = os.path.join(src_dir, f"{fname}.align")
+    src_txt_filename = fname
     words = []
     with open(src_txt_filename, "r") as file:
         for line in file:
@@ -94,6 +95,12 @@ def get_gt_text(src_dir, fname):
             if len(parts) == 3 and parts[2] != 'sil':
                 words.append(parts[2])
         return ' '.join(words).upper()
+
+def process_text(text):
+    punctuation = string.punctuation.replace("'", "")
+    text = text.translate(str.maketrans('', '', punctuation))
+    text = text.upper()
+    return text
 
 phrases_fp = os.path.join(args.data_dir, f"phrases.json")
 src_vid_dir = os.path.join(args.data_dir, f"videos")
@@ -106,6 +113,8 @@ f = open(phrases_fp, 'r')
 video_list = json.load(f)
 f.close()
 
+print(f"{len(video_list) = }")
+
 print(f"Src video dir = {src_vid_dir}")
 print(f"DST vid dir = {dst_vid_dir}")
 print(f"DST txt dir = {dst_txt_dir}")
@@ -115,7 +124,7 @@ os.makedirs(dst_txt_dir, exist_ok=True)
 
 # Label file for the videos
 dst_label_dir = args.root_dir
-dst_label_file = os.path.join(dst_label_dir, f"phrases_label.txt")
+dst_label_file = os.path.join(dst_label_dir, f"labels.txt")
 os.makedirs(dst_label_dir, exist_ok=True)
 f = open(dst_label_file, "w")
 
@@ -139,7 +148,7 @@ for i, video_metadata in enumerate(video_list):
     dst_vid_filename = os.path.join(dst_vid_dir, f"{fname}.mp4")
     dst_txt_filename = os.path.join(dst_txt_dir, f"{fname}.txt")
 
-    gt_text = video_metadata['transcript'].upper()
+    gt_text = process_text(video_metadata['transcript'])
     save_vid_aud_txt(
         dst_vid_filename,
         None,
@@ -153,10 +162,12 @@ for i, video_metadata in enumerate(video_list):
     # token_id_str = " ".join(
     #     map(str, [_.item() for _ in text_transform.tokenize(gt_text)])
     # )
+    rel_dir = os.path.join("akshat_phrases", "processed_videos")
     basename = os.path.basename(dst_vid_filename)
+    rel_vid_path = os.path.join(rel_dir, basename)
 
     f.write(
-        f"{basename} {gt_text}\n"
+        f"{rel_vid_path} {gt_text}\n"
     )
     print(f"saved the data for {video_fname} to {dst_vid_filename}")
 f.close()
