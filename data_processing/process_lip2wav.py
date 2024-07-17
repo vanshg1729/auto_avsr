@@ -14,6 +14,10 @@ import cv2
 import numpy as np
 import torch
 
+import multiprocessing as mp
+from concurrent.futures import ThreadPoolExecutor, as_completed
+import traceback, subprocess
+
 from video_utils import clip_video_ffmpeg
 
 warnings.filterwarnings("ignore")
@@ -25,26 +29,32 @@ parser = argparse.ArgumentParser(description="Phrases Preprocessing")
 parser.add_argument(
     "--data-dir",
     type=str,
-    default='/ssd_scratch/cvit/vanshg/Lip2Wav/Dataset',
+    default='./datasets/Lip2Wav',
     help="Directory of original dataset",
 )
 parser.add_argument(
     "--detector",
     type=str,
-    default="mediapipe",
-    help="Type of face detector. (Default: mediapipe)",
+    default="retinaface",
+    help="Type of face detector. (Default: retinaface)",
 )
 parser.add_argument(
     "--root-dir",
     type=str,
-    default='/ssd_scratch/cvit/vanshg/Lip2Wav/Dataset',
+    default='./datasets/Lip2Wav',
     help="Root directory of preprocessed dataset",
 )
 parser.add_argument(
     '--speaker',
     type=str,
-    default='dl',
+    default='hs',
     help='Name of speaker'
+)
+parser.add_argument(
+    '--ngpu',
+    help='Number of GPUs across which to run in parallel',
+    default=1,
+    type=int
 )
 
 def save_track(video_path, track, output_path, fps):
@@ -59,10 +69,15 @@ def save_track(video_path, track, output_path, fps):
     # Don't save the video if it is less than 1 second
     if num_frames < fps:
         print(f"video track is less than 1 second: {num_frames = } | {start_frame = } | {end_frame = }")
-        return
+        return {}
 
     clip_video_ffmpeg(video_path, timestamp, output_path)
+    track_metadata = {'input_path': video_path, 'output_path': output_path,
+                      'start_time': start_time, 'end_time': end_time, 'fps': fps,
+                      "start_frame": start_frame, "end_frame": end_frame}
     print(f"Saved the face track with {num_frames = } to {output_path}")
+
+    return track_metadata
 
 args = parser.parse_args()
 
@@ -77,22 +92,17 @@ video_files = sorted(video_files)
 print(f"Total number of Video Files: {len(video_files)}")
 print(f"{video_files[0] = }")
 
-if args.detector == 'retinaface':
-    from ibug.face_alignment import FANPredictor
-    from ibug.face_detection import RetinaFacePredictor
-    model_name = "resnet50"
-    face_detector = RetinaFacePredictor(device=device, threshold=0.8,
-                                        model=RetinaFacePredictor.get_model(model_name))
-else:
-    import mediapipe as mp
-    mp_face_detection = mp.solutions.face_detection
-    full_range_detector = mp_face_detection.FaceDetection(min_detection_confidence=0.5, model_selection=1)
-    face_detector = full_range_detector
+# RetinaFace detector
+from ibug.face_alignment import FANPredictor
+from ibug.face_detection import RetinaFacePredictor
+model_name = "resnet50"
+face_detectors = [RetinaFacePredictor(device=f"cuda:{i}", threshold=0.8,
+                                    model=RetinaFacePredictor.get_model(model_name))
+                                    for i in range(args.ngpu)]
 
-
-for idx in tqdm(range(len(video_files)), desc="Processing Videos"):
-    video_path = video_files[idx]
+def process_video_file(video_path, args, gpu_id=0):
     print(f"Processing video: {video_path}")
+    face_detector = face_detectors[gpu_id]
     
     # Getting the output clips directory for this video
     video_fname = os.path.basename(video_path).split('.')[0]
@@ -112,6 +122,9 @@ for idx in tqdm(range(len(video_files)), desc="Processing Videos"):
     track_id = 0
     # FACE TRACKING
     tracks = []
+    tracks_metadata = []
+    metadata_filepath = os.path.join(clips_dir, f"tracks.json")
+
     for frame_idx in tqdm(range(frame_count), desc="Processing Frames"):
         ret, frame = cap.read()
         if not ret:
@@ -119,17 +132,11 @@ for idx in tqdm(range(len(video_files)), desc="Processing Videos"):
             break
         
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        if args.detector == 'retinaface':
-            detected_faces = face_detector(frame)
-            # continue if no face is detected in the frame
-            if len(detected_faces) == 0:
-                continue
-        else:
-            results = face_detector.process(frame)
-            detected_faces = results.detections
-            # continue if no face is detected in the frame
-            if not detected_faces:
-                continue
+        detected_faces = face_detector(frame)
+
+        # continue if no face is detected in the frame
+        if len(detected_faces) == 0:
+            continue
 
         # Detected face along with bounding box
         # detected_face = detected_faces[0]
@@ -156,7 +163,9 @@ for idx in tqdm(range(len(video_files)), desc="Processing Videos"):
             if len(tracks):
                 prev_track = tracks[-1]
                 out_vid_path = os.path.join(clips_dir, f"track-{track_id}.mp4")
-                save_track(video_path, prev_track, out_vid_path, fps)
+                track_metadata = save_track(video_path, prev_track, out_vid_path, fps)
+                if len(track_metadata):
+                    tracks_metadata.append(track_metadata)
 
                 track_id += 1
                 tracks = [] # empty the previous tracks array
@@ -168,13 +177,44 @@ for idx in tqdm(range(len(video_files)), desc="Processing Videos"):
                 # "bboxes": [bbox]
             }
             tracks.append(new_track)
-            print(f"Started a new track at frame {frame_idx}")
+            print(f"\nStarted a new track at frame {frame_idx}")
     
     # Save the last track if there is one left
     if len(tracks):
         prev_track = tracks[-1]
         out_vid_path = os.path.join(clips_dir, f"track-{track_id}.mp4")
-        save_track(video_path, prev_track, out_vid_path, fps)
+        track_metadata = save_track(video_path, prev_track, out_vid_path, fps)
+        if len(track_metadata):
+            tracks_metadata.append(track_metadata)
 
         track_id += 1
         tracks = [] # empty the previous tracks array
+    
+    with open(metadata_filepath, 'w') as json_file:
+        json.dump(tracks_metadata, json_file, indent=4)
+        print(f"Saved the tracks metadata to {metadata_filepath}")
+
+def mp_handler(job):
+    video_path, args, gpu_id = job
+    try:
+        process_video_file(video_path, args, gpu_id)
+    except KeyboardInterrupt:
+        exit(0)
+
+def main(args):
+    video_files = glob.glob(os.path.join(src_vid_dir, "*.mp4"))
+    video_files = sorted(video_files)
+    print(f"Total number of Video Files: {len(video_files)}")
+    print(f"{video_files[0] = }")
+
+    jobs = [(video_path, args, i % args.ngpu) for i, video_path in enumerate(video_files)]
+    p = ThreadPoolExecutor(args.ngpu)
+    futures = [p.submit(mp_handler, j) for j in jobs]
+    _ = [r.result() for r in tqdm(as_completed(futures), total=len(futures))]
+
+    # for idx in tqdm(range(len(video_files)), desc="Processing Videos"):
+    #     video_path = video_files[idx]
+    #     process_video_file(video_path, args)
+
+if __name__ == '__main__':
+    main(args)
