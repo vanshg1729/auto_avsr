@@ -27,22 +27,39 @@ parser = argparse.ArgumentParser(description="Phrases Preprocessing")
 parser.add_argument(
     "--data-dir",
     type=str,
-    default='./datasets/Lip2Wav',
+    default='/ssd_scratch/cvit/vanshg/Lip2Wav/Dataset',
     help="Directory of original dataset",
 )
 
 parser.add_argument(
     "--root-dir",
     type=str,
-    default='./datasets/Lip2Wav',
+    default='/ssd_scratch/cvit/vanshg/Lip2Wav/Dataset',
     help="Root directory of preprocessed dataset",
 )
 parser.add_argument(
     '--speaker',
     type=str,
-    default='jazzy',
+    default='dl',
     help='Name of speaker'
 )
+
+def save_track(video_path, track, output_path, fps):
+    start_frame = track['start_frame']
+    end_frame = track['end_frame']
+    num_frames = end_frame - start_frame + 1
+
+    start_time = int(start_frame/fps)
+    end_time = int(end_frame/fps) + 1
+    timestamp = (start_time, end_time)
+
+    # Don't save the video if it is less than 1 second
+    if num_frames < fps:
+        print(f"video track is less than 1 second: {num_frames = } | {start_frame = } | {end_frame = }")
+        return
+
+    clip_video_ffmpeg(video_path, timestamp, output_path)
+    print(f"Saved the face track with {num_frames = } to {output_path}")
 
 args = parser.parse_args()
 
@@ -80,11 +97,13 @@ for idx in tqdm(range(len(video_files)), desc="Processing Videos"):
     fps = int(cap.get(cv2.CAP_PROP_FPS))
     print(f"Number of Frames: {frame_count} | FPS: {fps}")
 
+    track_id = 0
     # FACE TRACKING
     tracks = []
     for frame_idx in tqdm(range(frame_count), desc="Processing Frames"):
         ret, frame = cap.read()
         if not ret:
+            print(f"No more frames to process in {video_path}")
             break
         
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
@@ -109,8 +128,8 @@ for idx in tqdm(range(len(video_files)), desc="Processing Videos"):
             # Continue the previous track
             if frame_idx == last_track_frame + 1:
                 last_track['end_frame'] = frame_idx
-                last_track['frames'].append(frame)
-                last_track['bboxes'].append(bbox)
+                # last_track['frames'].append(frame)
+                # last_track['bboxes'].append(bbox)
                 create_new_track = False
         
         # Start a new track
@@ -118,33 +137,26 @@ for idx in tqdm(range(len(video_files)), desc="Processing Videos"):
             # Save the previous track if there is one
             if len(tracks):
                 prev_track = tracks[-1]
-                start_frame = prev_track['start_frame']
-                end_frame = prev_track['end_frame']
-                num_frames = end_frame - start_frame + 1
-
-                start_time = int(start_frame/fps)
-                end_time = int(end_frame/fps) + 1
-                timestamp = (start_time, end_time)
-
-                # Don't save the video if it is less than 1 second
-                if num_frames < fps:
-                    print(f"video track is less than 1 second: {num_frames = } | {start_frame = } | {end_frame = }")
-                    continue
-
-                track_id = len(tracks) - 1
-
                 out_vid_path = os.path.join(clips_dir, f"track-{track_id}.mp4")
-                clip_video_ffmpeg(video_path, timestamp, out_vid_path)
-                print(f"{start_time = } | {end_time = }")
-                print(f"Saved the face track with {num_frames = } to {out_vid_path}")
+                save_track(video_path, prev_track, out_vid_path, fps)
+
+                track_id += 1
+                tracks = [] # empty the previous tracks array
 
             new_track = {
                 "start_frame": frame_idx,
                 "end_frame": frame_idx,
-                "frames": [frame],
-                "bboxes": [bbox]
+                # "frames": [frame],
+                # "bboxes": [bbox]
             }
             tracks.append(new_track)
             print(f"Started a new track at frame {frame_idx}")
     
-    break
+    # Save the last track if there is one left
+    if len(tracks):
+        prev_track = tracks[-1]
+        out_vid_path = os.path.join(clips_dir, f"track-{track_id}.mp4")
+        save_track(video_path, prev_track, out_vid_path, fps)
+
+        track_id += 1
+        tracks = [] # empty the previous tracks array
