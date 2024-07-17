@@ -14,8 +14,6 @@ import cv2
 import numpy as np
 import torch
 
-from ibug.face_alignment import FANPredictor
-from ibug.face_detection import RetinaFacePredictor
 from video_utils import clip_video_ffmpeg
 
 warnings.filterwarnings("ignore")
@@ -30,7 +28,12 @@ parser.add_argument(
     default='/ssd_scratch/cvit/vanshg/Lip2Wav/Dataset',
     help="Directory of original dataset",
 )
-
+parser.add_argument(
+    "--detector",
+    type=str,
+    default="mediapipe",
+    help="Type of face detector. (Default: mediapipe)",
+)
 parser.add_argument(
     "--root-dir",
     type=str,
@@ -74,9 +77,18 @@ video_files = sorted(video_files)
 print(f"Total number of Video Files: {len(video_files)}")
 print(f"{video_files[0] = }")
 
-model_name = "resnet50"
-face_detector = RetinaFacePredictor(device=device, threshold=0.8,
-                                    model=RetinaFacePredictor.get_model(model_name))
+if args.detector == 'retinaface':
+    from ibug.face_alignment import FANPredictor
+    from ibug.face_detection import RetinaFacePredictor
+    model_name = "resnet50"
+    face_detector = RetinaFacePredictor(device=device, threshold=0.8,
+                                        model=RetinaFacePredictor.get_model(model_name))
+else:
+    import mediapipe as mp
+    mp_face_detection = mp.solutions.face_detection
+    full_range_detector = mp_face_detection.FaceDetection(min_detection_confidence=0.5, model_selection=1)
+    face_detector = full_range_detector
+
 
 for idx in tqdm(range(len(video_files)), desc="Processing Videos"):
     video_path = video_files[idx]
@@ -107,17 +119,23 @@ for idx in tqdm(range(len(video_files)), desc="Processing Videos"):
             break
         
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        detected_faces = face_detector(frame)
-
-        # continue if no face is detected in the frame
-        if len(detected_faces) == 0:
-            continue
+        if args.detector == 'retinaface':
+            detected_faces = face_detector(frame)
+            # continue if no face is detected in the frame
+            if len(detected_faces) == 0:
+                continue
+        else:
+            results = face_detector.process(frame)
+            detected_faces = results.detections
+            # continue if no face is detected in the frame
+            if not detected_faces:
+                continue
 
         # Detected face along with bounding box
-        detected_face = detected_faces[0]
-        (x1, y1, x2, y2) = detected_face[:4]
-        w, h = (x2 - x1), (y2 - y1)
-        bbox = (x1, y1, w, h)
+        # detected_face = detected_faces[0]
+        # (x1, y1, x2, y2) = detected_face[:4]
+        # w, h = (x2 - x1), (y2 - y1)
+        # bbox = (x1, y1, w, h)
 
         # Check the already existing tracks
         create_new_track = True
