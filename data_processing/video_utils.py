@@ -14,7 +14,7 @@ def seconds_to_hhmmss(seconds):
     hours = int(seconds // 3600)
     minutes = int((seconds % 3600) // 60)
     secs = seconds % 60
-    return f"{hours:02}:{minutes:02}:{secs:02}"
+    return f"{hours:02}:{minutes:02}:{secs:06.3f}"
 
 def clip_video_ffmpeg(video_path, timestamsp, output_path):
     output_dir = os.path.dirname(output_path)
