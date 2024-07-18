@@ -90,12 +90,14 @@ elif args.detector == 'yolov5':
     from preparation.detectors.yoloface.face_detector import YoloDetector
     face_detectors = [YoloDetector(device=f"cuda:{i}", min_face=25)
                       for i in range(args.ngpu)]
-else:
+elif args.detector == 'face_alignment':
     # Face Alignment Detector
     import face_detection
     from face_detection import FaceAlignment
     face_detectors = [FaceAlignment(face_detection.LandmarksType._2D, flip_input=False,
                                     device=f"cuda:{i}") for i in range(args.ngpu)]
+else:
+     raise ValueError(f"'{args.detector = }' Detector is not a valid choice for face detector")
 
 def get_batch_prediction_retinaface(frames, face_detector):
     preds = []
@@ -114,15 +116,16 @@ def save_track(video_path, track, output_path, fps):
     end_frame = track['end_frame']
     num_frames = end_frame - start_frame + 1
 
-    start_time = int(start_frame/fps)
-    end_time = int(end_frame/fps) + 1
+    start_time = start_frame/fps
+    end_time = end_frame/fps
     timestamp = (start_time, end_time)
 
     # Don't save the video if it is less than 1 second
     if num_frames < fps:
-        print(f"video track is less than 1 second: {num_frames = } | {start_frame = } | {end_frame = }")
+        print(f"\nvideo track is less than 1 second: {num_frames = } | {start_frame = } | {end_frame = }")
         return {}
 
+    print(f"\nStart Frame: {start_frame} | End Frame: {end_frame}")
     clip_video_ffmpeg(video_path, timestamp, output_path)
     track_metadata = {'input_path': video_path, 'output_path': output_path,
                       'start_time': start_time, 'end_time': end_time, 'fps': fps,
