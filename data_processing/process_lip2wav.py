@@ -29,7 +29,7 @@ parser = argparse.ArgumentParser(description="Phrases Preprocessing")
 parser.add_argument(
     "--data-dir",
     type=str,
-    default='./datasets/Lip2Wav',
+    default='/ssd_scratch/cvit/vanshg/Lip2Wav/Dataset',
     help="Directory of original dataset",
 )
 parser.add_argument(
@@ -42,13 +42,13 @@ parser.add_argument(
 parser.add_argument(
     "--root-dir",
     type=str,
-    default='./datasets/Lip2Wav',
+    default='/ssd_scratch/cvit/vanshg/Lip2Wav/Dataset',
     help="Root directory of preprocessed dataset",
 )
 parser.add_argument(
     '--speaker',
     type=str,
-    default='hs',
+    default='chess',
     help='Name of speaker'
 )
 parser.add_argument(
@@ -60,31 +60,9 @@ parser.add_argument(
 parser.add_argument(
     '--batch-size',
     help='Single GPU Face Detection batch size',
-    default=16,
+    default=32,
     type=int
 )
-
-def save_track(video_path, track, output_path, fps):
-    start_frame = track['start_frame']
-    end_frame = track['end_frame']
-    num_frames = end_frame - start_frame + 1
-
-    start_time = int(start_frame/fps)
-    end_time = int(end_frame/fps) + 1
-    timestamp = (start_time, end_time)
-
-    # Don't save the video if it is less than 1 second
-    if num_frames < fps:
-        print(f"video track is less than 1 second: {num_frames = } | {start_frame = } | {end_frame = }")
-        return {}
-
-    clip_video_ffmpeg(video_path, timestamp, output_path)
-    track_metadata = {'input_path': video_path, 'output_path': output_path,
-                      'start_time': start_time, 'end_time': end_time, 'fps': fps,
-                      "start_frame": start_frame, "end_frame": end_frame}
-    print(f"Saved the face track with {num_frames = } to {output_path}")
-
-    return track_metadata
 
 args = parser.parse_args()
 
@@ -118,6 +96,40 @@ from face_detection import FaceAlignment
 face_detectors = [FaceAlignment(face_detection.LandmarksType._2D, flip_input=False,
                                 device=f"cuda:{i}") for i in range(args.ngpu)]
 
+def save_track(video_path, track, output_path, fps):
+    start_frame = track['start_frame']
+    end_frame = track['end_frame']
+    num_frames = end_frame - start_frame + 1
+
+    start_time = int(start_frame/fps)
+    end_time = int(end_frame/fps) + 1
+    timestamp = (start_time, end_time)
+
+    # Don't save the video if it is less than 1 second
+    if num_frames < fps:
+        print(f"video track is less than 1 second: {num_frames = } | {start_frame = } | {end_frame = }")
+        return {}
+
+    clip_video_ffmpeg(video_path, timestamp, output_path)
+    track_metadata = {'input_path': video_path, 'output_path': output_path,
+                      'start_time': start_time, 'end_time': end_time, 'fps': fps,
+                      "start_frame": start_frame, "end_frame": end_frame}
+    print(f"Saved the face track with {num_frames = } to {output_path}")
+
+    return track_metadata
+
+def crop_frame(frame, args):
+	if args.speaker == "chem" or args.speaker == "hs":
+		return frame
+	elif args.speaker == "chess":
+		H, W = frame.shape[:2]
+		return frame[H//3:, W//2:]
+		# return frame[270:460, 770:1130]
+	elif args.speaker == "dl" or args.speaker == "eh":
+		return  frame[int(frame.shape[0]*3/4):, int(frame.shape[1]*3/4): ]
+	else:
+		raise ValueError("Unknown speaker!")
+		exit()
 
 def video_frame_batch_generator(video_path, batch_size):
     """
@@ -144,6 +156,7 @@ def video_frame_batch_generator(video_path, batch_size):
             break
         
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB) # coverting to RGB
+        frame = crop_frame(frame, args)
         batch_frames.append(frame)
         batch_indices.append(frame_idx)
         frame_idx += 1
@@ -169,7 +182,6 @@ def process_video_file(video_path, args, gpu_id=0, video_id=0):
 
     # Open the video file
     cap = cv2.VideoCapture(video_path)
-
     if not cap.isOpened():
         raise ValueError(f"Error opening video file: {video_path}")
     
@@ -180,8 +192,8 @@ def process_video_file(video_path, args, gpu_id=0, video_id=0):
     print(f"Number of Frames: {total_frames} | FPS: {fps}")
     batch_size = args.batch_size
 
-    track_id = 0
     # FACE TRACKING
+    track_id = 0
     tracks = []
     tracks_metadata = []
     metadata_filepath = os.path.join(clips_dir, f"tracks.json")
@@ -190,14 +202,6 @@ def process_video_file(video_path, args, gpu_id=0, video_id=0):
     # Batch Processing of Frames
     for frames, frame_ids in tqdm(video_loader, total=total_frames//batch_size, 
                                   desc=f"Processing video {video_id} Frame Batches"):
-        # for frame_idx in tqdm(range(frame_count), desc="Processing Frames"):
-        # ret, frame = cap.read()
-        # if not ret:
-        #     print(f"No more frames to process in {video_path}")
-        #     break
-        
-        # frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-
         # if args.detector == 'retinaface':
         #     detected_faces = face_detector(frame)
         # else:
@@ -246,8 +250,8 @@ def process_video_file(video_path, args, gpu_id=0, video_id=0):
                     track_metadata = save_track(video_path, prev_track, out_vid_path, fps)
                     if len(track_metadata):
                         tracks_metadata.append(track_metadata)
+                        track_id += 1
 
-                    track_id += 1
                     tracks = [] # empty the previous tracks array
 
                 new_track = {
@@ -266,8 +270,8 @@ def process_video_file(video_path, args, gpu_id=0, video_id=0):
         track_metadata = save_track(video_path, prev_track, out_vid_path, fps)
         if len(track_metadata):
             tracks_metadata.append(track_metadata)
+            track_id += 1
 
-        track_id += 1
         tracks = [] # empty the previous tracks array
     
     # Save the tracks.json metadata file after all tracks have been detected
