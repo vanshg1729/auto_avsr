@@ -42,7 +42,9 @@ def crop_frame(frame, args):
 	if args.speaker == "chem" or args.speaker == "hs":
 		return frame
 	elif args.speaker == "chess":
-		return frame[270:460, 770:1130]
+		H, W = frame.shape[:2]
+		return frame[H//3:, W//2:]
+		# return frame[270:460, 770:1130]
 	elif args.speaker == "dl" or args.speaker == "eh":
 		return  frame[int(frame.shape[0]*3/4):, int(frame.shape[1]*3/4): ]
 	else:
