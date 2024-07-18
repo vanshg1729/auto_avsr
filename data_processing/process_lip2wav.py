@@ -36,6 +36,7 @@ parser.add_argument(
     "--detector",
     type=str,
     default="retinaface",
+    choices=['retinaface', 'yolov5'],
     help="Type of face detector. (Default: retinaface)",
 )
 parser.add_argument(
@@ -54,6 +55,12 @@ parser.add_argument(
     '--ngpu',
     help='Number of GPUs across which to run in parallel',
     default=1,
+    type=int
+)
+parser.add_argument(
+    '--batch-size',
+    help='Single GPU Face Detection batch size',
+    default=16,
     type=int
 )
 
@@ -92,15 +99,67 @@ video_files = sorted(video_files)
 print(f"Total number of Video Files: {len(video_files)}")
 print(f"{video_files[0] = }")
 
-# RetinaFace detector
-from ibug.face_alignment import FANPredictor
-from ibug.face_detection import RetinaFacePredictor
-model_name = "resnet50"
-face_detectors = [RetinaFacePredictor(device=f"cuda:{i}", threshold=0.8,
-                                    model=RetinaFacePredictor.get_model(model_name))
-                                    for i in range(args.ngpu)]
+# if args.detector == 'retinaface':
+#     from ibug.face_alignment import FANPredictor
+#     from ibug.face_detection import RetinaFacePredictor
+#     model_name = "resnet50"
+#     face_detectors = [RetinaFacePredictor(device=f"cuda:{i}", threshold=0.8,
+#                                         model=RetinaFacePredictor.get_model(model_name))
+#                                         for i in range(args.ngpu)]
+# else:
+#     sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+#     from preparation.detectors.yoloface.face_detector import YoloDetector
+#     face_detectors = [YoloDetector(device=f"cuda:{i}", min_face=10)
+#                       for i in range(args.ngpu)]
 
-def process_video_file(video_path, args, gpu_id=0):
+# Face Detector
+import face_detection
+from face_detection import FaceAlignment
+face_detectors = [FaceAlignment(face_detection.LandmarksType._2D, flip_input=False,
+                                device=f"cuda:{i}") for i in range(args.ngpu)]
+
+
+def video_frame_batch_generator(video_path, batch_size):
+    """
+    Generator function that reads frames from a video and yields them in batches.
+
+    Args:
+        video_path (str): Path to the video file.
+        batch_size (int): Number of frames per batch.
+
+    Yields:
+        tuple: A tuple containing a list of frames and a list of frame indices.
+    """
+    cap = cv2.VideoCapture(video_path)
+    if not cap.isOpened():
+        raise ValueError(f"Unable to open video file: {video_path}")
+
+    batch_frames = []
+    batch_indices = []
+    frame_idx = 0
+
+    while True:
+        ret, frame = cap.read()
+        if not ret:
+            break
+        
+        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB) # coverting to RGB
+        batch_frames.append(frame)
+        batch_indices.append(frame_idx)
+        frame_idx += 1
+
+        if len(batch_frames) == batch_size:
+            yield batch_frames, batch_indices
+            batch_frames = []
+            batch_indices = []
+
+    # Yield the last batch if it's not empty
+    if batch_frames:
+        yield batch_frames, batch_indices
+
+    cap.release()
+
+def process_video_file(video_path, args, gpu_id=0, video_id=0):
     print(f"Processing video: {video_path}")
     face_detector = face_detectors[gpu_id]
     
@@ -115,69 +174,90 @@ def process_video_file(video_path, args, gpu_id=0):
         raise ValueError(f"Error opening video file: {video_path}")
     
     # Get the total number of frames and fps
-    frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+    total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
     fps = int(cap.get(cv2.CAP_PROP_FPS))
-    print(f"Number of Frames: {frame_count} | FPS: {fps}")
+    cap.release()
+    print(f"Number of Frames: {total_frames} | FPS: {fps}")
+    batch_size = args.batch_size
 
     track_id = 0
     # FACE TRACKING
     tracks = []
     tracks_metadata = []
     metadata_filepath = os.path.join(clips_dir, f"tracks.json")
+    video_loader = video_frame_batch_generator(video_path, batch_size)
 
-    for frame_idx in tqdm(range(frame_count), desc="Processing Frames"):
-        ret, frame = cap.read()
-        if not ret:
-            print(f"No more frames to process in {video_path}")
-            break
+    # Batch Processing of Frames
+    for frames, frame_ids in tqdm(video_loader, total=total_frames//batch_size, 
+                                  desc=f"Processing video {video_id} Frame Batches"):
+        # for frame_idx in tqdm(range(frame_count), desc="Processing Frames"):
+        # ret, frame = cap.read()
+        # if not ret:
+        #     print(f"No more frames to process in {video_path}")
+        #     break
         
-        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        detected_faces = face_detector(frame)
+        # frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+
+        # if args.detector == 'retinaface':
+        #     detected_faces = face_detector(frame)
+        # else:
+        #     bboxes, points = face_detector.predict(frame)
+        #     detected_faces = bboxes[0]
 
         # continue if no face is detected in the frame
-        if len(detected_faces) == 0:
-            continue
+        # if len(detected_faces) == 0:
+        #     continue
 
-        # Detected face along with bounding box
-        # detected_face = detected_faces[0]
-        # (x1, y1, x2, y2) = detected_face[:4]
-        # w, h = (x2 - x1), (y2 - y1)
-        # bbox = (x1, y1, w, h)
-
-        # Check the already existing tracks
-        create_new_track = True
-        if len(tracks):
-            last_track = tracks[-1]
-            last_track_frame = last_track['end_frame']
-
-            # Continue the previous track
-            if frame_idx == last_track_frame + 1:
-                last_track['end_frame'] = frame_idx
-                # last_track['frames'].append(frame)
-                # last_track['bboxes'].append(bbox)
-                create_new_track = False
+        # Get batch predictions for face detection
+        preds = face_detector.get_detections_for_batch(np.array(frames))
         
-        # Start a new track
-        if create_new_track:
-            # Save the previous track if there is one
+        # process each frame individually to get face tracks
+        for i in range(len(frames)):
+            if preds[i] is None:
+                continue
+            
+            frame, frame_idx = frames[i], frame_ids[i]
+
+            # Detected face along with bounding box
+            # detected_face = detected_faces[0]
+            # (x1, y1, x2, y2) = detected_face[:4]
+            # w, h = (x2 - x1), (y2 - y1)
+            # bbox = (x1, y1, w, h)
+
+            # Check the already existing tracks
+            create_new_track = True
             if len(tracks):
-                prev_track = tracks[-1]
-                out_vid_path = os.path.join(clips_dir, f"track-{track_id}.mp4")
-                track_metadata = save_track(video_path, prev_track, out_vid_path, fps)
-                if len(track_metadata):
-                    tracks_metadata.append(track_metadata)
+                last_track = tracks[-1]
+                last_track_frame = last_track['end_frame']
 
-                track_id += 1
-                tracks = [] # empty the previous tracks array
+                # Continue the previous track
+                if frame_idx == last_track_frame + 1:
+                    last_track['end_frame'] = frame_idx
+                    # last_track['frames'].append(frame)
+                    # last_track['bboxes'].append(bbox)
+                    create_new_track = False
+            
+            # Start a new track
+            if create_new_track:
+                # Save the previous track if there is one
+                if len(tracks):
+                    prev_track = tracks[-1]
+                    out_vid_path = os.path.join(clips_dir, f"track-{track_id}.mp4")
+                    track_metadata = save_track(video_path, prev_track, out_vid_path, fps)
+                    if len(track_metadata):
+                        tracks_metadata.append(track_metadata)
 
-            new_track = {
-                "start_frame": frame_idx,
-                "end_frame": frame_idx,
-                # "frames": [frame],
-                # "bboxes": [bbox]
-            }
-            tracks.append(new_track)
-            print(f"\nStarted a new track at frame {frame_idx}")
+                    track_id += 1
+                    tracks = [] # empty the previous tracks array
+
+                new_track = {
+                    "start_frame": frame_idx,
+                    "end_frame": frame_idx,
+                    # "frames": [frame],
+                    # "bboxes": [bbox]
+                }
+                tracks.append(new_track)
+                print(f"\nStarted a new track at frame {frame_idx}")
     
     # Save the last track if there is one left
     if len(tracks):
@@ -190,14 +270,15 @@ def process_video_file(video_path, args, gpu_id=0):
         track_id += 1
         tracks = [] # empty the previous tracks array
     
+    # Save the tracks.json metadata file after all tracks have been detected
     with open(metadata_filepath, 'w') as json_file:
         json.dump(tracks_metadata, json_file, indent=4)
         print(f"Saved the tracks metadata to {metadata_filepath}")
 
 def mp_handler(job):
-    video_path, args, gpu_id = job
+    video_path, args, gpu_id, video_id = job
     try:
-        process_video_file(video_path, args, gpu_id)
+        process_video_file(video_path, args, gpu_id, video_id)
     except KeyboardInterrupt:
         exit(0)
 
@@ -207,14 +288,12 @@ def main(args):
     print(f"Total number of Video Files: {len(video_files)}")
     print(f"{video_files[0] = }")
 
-    jobs = [(video_path, args, i % args.ngpu) for i, video_path in enumerate(video_files)]
+    jobs = [(video_path, args, i % args.ngpu, i) for i, video_path in enumerate(video_files)]
     p = ThreadPoolExecutor(args.ngpu)
     futures = [p.submit(mp_handler, j) for j in jobs]
     _ = [r.result() for r in tqdm(as_completed(futures), total=len(futures))]
 
-    # for idx in tqdm(range(len(video_files)), desc="Processing Videos"):
-    #     video_path = video_files[idx]
-    #     process_video_file(video_path, args)
+    print(f"WROTE FACE_TRACKS OF ALL VIDEOS OF SPEAKER {args.speaker} !!!")
 
 if __name__ == '__main__':
     main(args)
