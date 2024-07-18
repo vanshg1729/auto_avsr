@@ -29,20 +29,20 @@ parser = argparse.ArgumentParser(description="Phrases Preprocessing")
 parser.add_argument(
     "--data-dir",
     type=str,
-    default='/ssd_scratch/cvit/vanshg/Lip2Wav/Dataset',
+    default='./datasets/Lip2Wav',
     help="Directory of original dataset",
 )
 parser.add_argument(
     "--detector",
     type=str,
     default="retinaface",
-    choices=['retinaface', 'yolov5'],
+    choices=['retinaface', 'yolov5', 'face_alignment'],
     help="Type of face detector. (Default: retinaface)",
 )
 parser.add_argument(
     "--root-dir",
     type=str,
-    default='/ssd_scratch/cvit/vanshg/Lip2Wav/Dataset',
+    default='./datasets/Lip2Wav',
     help="Root directory of preprocessed dataset",
 )
 parser.add_argument(
@@ -60,11 +60,12 @@ parser.add_argument(
 parser.add_argument(
     '--batch-size',
     help='Single GPU Face Detection batch size',
-    default=32,
+    default=16,
     type=int
 )
 
 args = parser.parse_args()
+print(f"Detecting faces using : {args.detector}")
 
 src_speaker_dir = os.path.join(args.data_dir, args.speaker)
 src_vid_dir = os.path.join(src_speaker_dir, "videos")
@@ -77,24 +78,36 @@ video_files = sorted(video_files)
 print(f"Total number of Video Files: {len(video_files)}")
 print(f"{video_files[0] = }")
 
-# if args.detector == 'retinaface':
-#     from ibug.face_alignment import FANPredictor
-#     from ibug.face_detection import RetinaFacePredictor
-#     model_name = "resnet50"
-#     face_detectors = [RetinaFacePredictor(device=f"cuda:{i}", threshold=0.8,
-#                                         model=RetinaFacePredictor.get_model(model_name))
-#                                         for i in range(args.ngpu)]
-# else:
-#     sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-#     from preparation.detectors.yoloface.face_detector import YoloDetector
-#     face_detectors = [YoloDetector(device=f"cuda:{i}", min_face=10)
-#                       for i in range(args.ngpu)]
+if args.detector == 'retinaface':
+    from ibug.face_alignment import FANPredictor
+    from ibug.face_detection import RetinaFacePredictor
+    model_name = "resnet50"
+    face_detectors = [RetinaFacePredictor(device=f"cuda:{i}", threshold=0.8,
+                                        model=RetinaFacePredictor.get_model(model_name))
+                                        for i in range(args.ngpu)]
+elif args.detector == 'yolov5':
+    sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+    from preparation.detectors.yoloface.face_detector import YoloDetector
+    face_detectors = [YoloDetector(device=f"cuda:{i}", min_face=25)
+                      for i in range(args.ngpu)]
+else:
+    # Face Alignment Detector
+    import face_detection
+    from face_detection import FaceAlignment
+    face_detectors = [FaceAlignment(face_detection.LandmarksType._2D, flip_input=False,
+                                    device=f"cuda:{i}") for i in range(args.ngpu)]
 
-# Face Detector
-import face_detection
-from face_detection import FaceAlignment
-face_detectors = [FaceAlignment(face_detection.LandmarksType._2D, flip_input=False,
-                                device=f"cuda:{i}") for i in range(args.ngpu)]
+def get_batch_prediction_retinaface(frames, face_detector):
+    preds = []
+    for frame in frames:
+         pred = face_detector(frame)
+         preds.append(pred)
+    
+    return preds
+
+def get_batch_prediction_yolov5(frames, face_detector):
+     bboxes, points = face_detector.predict(frames)
+     return bboxes
 
 def save_track(video_path, track, output_path, fps):
     start_frame = track['start_frame']
@@ -118,14 +131,13 @@ def save_track(video_path, track, output_path, fps):
 
     return track_metadata
 
-def crop_frame(frame, args):
-	if args.speaker == "chem" or args.speaker == "hs":
+def crop_frame(frame, speaker):
+	if speaker == "chem" or speaker == "hs":
 		return frame
-	elif args.speaker == "chess":
+	elif speaker == "chess":
 		H, W = frame.shape[:2]
 		return frame[H//3:, W//2:]
-		# return frame[270:460, 770:1130]
-	elif args.speaker == "dl" or args.speaker == "eh":
+	elif speaker == "dl" or speaker == "eh":
 		return  frame[int(frame.shape[0]*3/4):, int(frame.shape[1]*3/4): ]
 	else:
 		raise ValueError("Unknown speaker!")
@@ -156,7 +168,7 @@ def video_frame_batch_generator(video_path, batch_size):
             break
         
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB) # coverting to RGB
-        frame = crop_frame(frame, args)
+        frame = crop_frame(frame, args.speaker)
         batch_frames.append(frame)
         batch_indices.append(frame_idx)
         frame_idx += 1
@@ -202,22 +214,17 @@ def process_video_file(video_path, args, gpu_id=0, video_id=0):
     # Batch Processing of Frames
     for frames, frame_ids in tqdm(video_loader, total=total_frames//batch_size, 
                                   desc=f"Processing video {video_id} Frame Batches"):
-        # if args.detector == 'retinaface':
-        #     detected_faces = face_detector(frame)
-        # else:
-        #     bboxes, points = face_detector.predict(frame)
-        #     detected_faces = bboxes[0]
+        if args.detector == 'retinaface':
+            preds = get_batch_prediction_retinaface(frames, face_detector)
+        elif args.detector == 'yolov5':
+            preds = get_batch_prediction_yolov5(frames, face_detector)
+        else:
+            preds = face_detector.get_detections_for_batch(np.array(frames))
 
-        # continue if no face is detected in the frame
-        # if len(detected_faces) == 0:
-        #     continue
-
-        # Get batch predictions for face detection
-        preds = face_detector.get_detections_for_batch(np.array(frames))
-        
         # process each frame individually to get face tracks
         for i in range(len(frames)):
-            if preds[i] is None:
+            # Continue if not face is detected in the frame
+            if (preds[i] is None) or (len(preds[i]) == 0):
                 continue
             
             frame, frame_idx = frames[i], frame_ids[i]
