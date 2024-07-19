@@ -29,20 +29,20 @@ parser = argparse.ArgumentParser(description="Phrases Preprocessing")
 parser.add_argument(
     "--data-dir",
     type=str,
-    default='./datasets/Lip2Wav',
+    default='/ssd_scratch/cvit/vanshg/Lip2Wav/Dataset',
     help="Directory of original dataset",
 )
 parser.add_argument(
     "--detector",
     type=str,
-    default="retinaface",
+    default="face_alignment",
     choices=['retinaface', 'yolov5', 'face_alignment'],
-    help="Type of face detector. (Default: retinaface)",
+    help="Type of face detector. (Default: face_alignment)",
 )
 parser.add_argument(
     "--root-dir",
     type=str,
-    default='./datasets/Lip2Wav',
+    default='/ssd_scratch/cvit/vanshg/Lip2Wav/Dataset',
     help="Root directory of preprocessed dataset",
 )
 parser.add_argument(
@@ -60,7 +60,7 @@ parser.add_argument(
 parser.add_argument(
     '--batch-size',
     help='Single GPU Face Detection batch size',
-    default=16,
+    default=512,
     type=int
 )
 
