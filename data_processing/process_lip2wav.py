@@ -48,7 +48,7 @@ parser.add_argument(
 parser.add_argument(
     '--speaker',
     type=str,
-    default='chess',
+    default='chem',
     help='Name of speaker'
 )
 parser.add_argument(
@@ -60,7 +60,7 @@ parser.add_argument(
 parser.add_argument(
     '--batch-size',
     help='Single GPU Face Detection batch size',
-    default=512,
+    default=256,
     type=int
 )
 
@@ -126,7 +126,7 @@ def save_track(video_path, track, output_path, fps):
         return {}
 
     print(f"\nStart Frame: {start_frame} | End Frame: {end_frame}")
-    clip_video_ffmpeg(video_path, timestamp, output_path)
+    clip_video_ffmpeg(video_path, timestamp, output_path, verbose=True)
     track_metadata = {'input_path': video_path, 'output_path': output_path,
                       'start_time': start_time, 'end_time': end_time, 'fps': fps,
                       "start_frame": start_frame, "end_frame": end_frame}
@@ -201,8 +201,8 @@ def process_video_file(video_path, args, gpu_id=0, video_id=0):
         raise ValueError(f"Error opening video file: {video_path}")
     
     # Get the total number of frames and fps
-    total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-    fps = int(cap.get(cv2.CAP_PROP_FPS))
+    total_frames = cap.get(cv2.CAP_PROP_FRAME_COUNT)
+    fps = cap.get(cv2.CAP_PROP_FPS)
     cap.release()
     print(f"Number of Frames: {total_frames} | FPS: {fps}")
     batch_size = args.batch_size
