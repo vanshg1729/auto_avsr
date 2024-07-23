@@ -197,9 +197,13 @@ def save_track_clips(face_track, track_id, track_clips, input_vid_dir, output_cl
     for clip in track_clips:
         clip_st = clip['start']
         clip_end = clip['end']
+        print(f"{clip_st = } | {clip_end = }")
+        print(f"{roundoff = }")
         if roundoff:
+            print(f"INSIDE Roundoff")
             clip_st = round_down(clip_st)
             clip_end = round_up(clip_end)
+        print(f"{clip_st = } | {clip_end = }")
         seg_id = clip['seg_id']
         sentence = clip['sentence']
 
