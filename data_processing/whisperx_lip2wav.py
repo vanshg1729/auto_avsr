@@ -56,7 +56,7 @@ parser.add_argument(
 parser.add_argument(
     '--speaker',
     type=str,
-    default='chess',
+    default='dl',
     help='Name of speaker'
 )
 parser.add_argument(

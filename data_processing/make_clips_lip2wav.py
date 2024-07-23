@@ -30,48 +30,29 @@ parser = argparse.ArgumentParser(description="Phrases Preprocessing")
 parser.add_argument(
     "--data-dir",
     type=str,
-    default='./datasets/Lip2Wav',
+    default='/ssd_scratch/cvit/vanshg/Lip2Wav/Dataset',
     help="Directory of original dataset",
-)
-parser.add_argument(
-    "--detector",
-    type=str,
-    default="face_alignment",
-    choices=['retinaface', 'yolov5', 'face_alignment'],
-    help="Type of face detector. (Default: face_alignment)",
 )
 parser.add_argument(
     "--root-dir",
     type=str,
-    default='./datasets/Lip2Wav',
+    default='/ssd_scratch/cvit/vanshg/Lip2Wav/Dataset',
     help="Root directory of preprocessed dataset",
 )
 parser.add_argument(
     '--speaker',
     type=str,
-    default='chem',
+    default='dl',
     help='Name of speaker'
-)
-parser.add_argument(
-    '--ngpu',
-    help='Number of GPUs across which to run in parallel',
-    default=1,
-    type=int
-)
-parser.add_argument(
-    '--batch-size',
-    help='Single GPU Face Detection batch size',
-    default=16,
-    type=int
 )
 
 args = parser.parse_args()
-print(f"Detecting faces using : {args.detector}")
 
 src_speaker_dir = os.path.join(args.data_dir, args.speaker)
-src_vid_dir = os.path.join(src_speaker_dir, "raw_videos")
+src_vid_dir = os.path.join(src_speaker_dir, "videos")
 src_tracks_dir = os.path.join(src_speaker_dir, "face_tracks")
 src_segments_dir = os.path.join(src_speaker_dir, "whisperx_transcripts")
+
 dst_clips_dir = os.path.join(src_speaker_dir, "sentence_clips")
 
 print(f"Src Video Dir: {src_vid_dir}, {os.path.exists(src_vid_dir)}")
@@ -85,8 +66,8 @@ print(f"Total number of Video Files: {len(video_files)}")
 print(f"{video_files[0] = }")
 
 for video_idx, video_file in enumerate(tqdm(video_files, desc="Making Video Clips")):
-    print(f"Processing video {video_idx} with path: {video_file}")
     video_fname = os.path.basename(video_file).split('.')[0]
+    print(f"Processing video {video_idx} with path: {video_file}")
 
     # Get all the face tracks for this video
     video_tracks_path = os.path.join(src_tracks_dir, f"{video_fname}/tracks.json")
@@ -97,6 +78,7 @@ for video_idx, video_file in enumerate(tqdm(video_files, desc="Making Video Clip
     aligned_segments = json.load(open(video_segments_path))
 
     tracks_metadata = []
+    total_clips = 0
     # Aligning the Face track to Sentence Segments and saving them
     for track_id, track in enumerate(tracks_list):
         # Get the clips for each of those tracks
@@ -113,7 +95,11 @@ for video_idx, video_file in enumerate(tqdm(video_files, desc="Making Video Clip
         )
 
         tracks_metadata.append(track_metadata)
+        total_clips += len(track_metadata['clips'])
     
+    print(f"Total Number of clips : {total_clips}")
+
+    # Saving the tracks metadata for this video
     video_clips_dir = os.path.join(dst_clips_dir, f"{video_fname}")
     track_metadata_path = os.path.join(video_clips_dir, "clips.json")
     with open(track_metadata_path, 'w') as json_file:
