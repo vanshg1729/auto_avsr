@@ -220,7 +220,8 @@ def save_track_clips(face_track, track_id, track_clips, input_vid_dir, output_cl
             "start": clip_st,
             "end": clip_end,
             "sentence": sentence,
-            "segment_id": seg_id
+            "segment_id": seg_id,
+            "clip_output_path": output_clip_path
         }
         track_metadata['clips'].append(clip_metadata)
     
