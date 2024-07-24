@@ -1,6 +1,9 @@
 import os
 import math
 import subprocess
+import cv2
+import numpy as np
+from tqdm import tqdm
 
 def seconds_to_hhmmss(seconds):
     """
@@ -46,6 +49,60 @@ def clip_video_ffmpeg(video_path, timestamsp, output_path, verbose=False):
     # Run the ffmpeg command
     subprocess.run(command, check=True)
 
+def video_frame_batch_generator(video_path, batch_size):
+    """
+    Generator function that reads frames from a video and yields them in batches.
+
+    Args:
+        video_path (str): Path to the video file.
+        batch_size (int): Number of frames per batch.
+
+    Yields:
+        tuple: A tuple containing a list of frames and a list of frame indices.
+    """
+    cap = cv2.VideoCapture(video_path)
+    if not cap.isOpened():
+        raise ValueError(f"Unable to open video file: {video_path}")
+
+    batch_frames = []
+    batch_indices = []
+    frame_idx = 0
+
+    while True:
+        ret, frame = cap.read()
+        if not ret:
+            break
+        
+        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB) # coverting to RGB
+        batch_frames.append(frame)
+        batch_indices.append(frame_idx)
+        frame_idx += 1
+
+        if len(batch_frames) == batch_size:
+            yield batch_frames, batch_indices
+            batch_frames = []
+            batch_indices = []
+
+    # Yield the last batch if it's not empty
+    if batch_frames:
+        yield batch_frames, batch_indices
+
+    cap.release()
+
+def save2vid_opencv(filename, vid, fps=25):
+    # os.makedirs(os.path.dirname(filename), exist_ok=True)
+    vid = vid.astype(np.uint8)
+    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+    T, H, W, C = vid.shape
+    frame_size = (W, H)
+    out = cv2.VideoWriter(filename, fourcc, fps, frame_size)
+
+    for i, frame in enumerate(tqdm(vid, desc="Writing Video frames")):
+        frame_bgr = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
+        cv2.imwrite(f"./images/{i:02d}.png", frame_bgr)
+        out.write(frame_bgr)
+
+    out.release()
 
 def is_segment_inside_track(face_start, face_end, sent_start, sent_end, tol=0.1):
     """
