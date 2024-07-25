@@ -9,7 +9,7 @@ outputs/
 .DS_Store
 **/datasets
 **/wandb
-**/preparation
+# **/preparation
 **/lightning_logs
 **/data
 **/datasets
