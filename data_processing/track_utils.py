@@ -45,12 +45,12 @@ def draw_bboxes(frames, bboxes):
     return frames_with_bbox
 
 def main():
-    video_path = '../datasets/deaf-youtube/benny/videos/jSk5T2aGqpM.mp4'
+    video_path = '../datasets/deaf-youtube/benny/videos/JaB9BT09nSE.mp4'
     
     # Reading the frames
     frames = []
     cap = cv2.VideoCapture(video_path)
-    while len(frames) < 4000:
+    while len(frames) < 2000:
         ret, frame = cap.read()
         if not ret:
             break

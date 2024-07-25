@@ -121,7 +121,7 @@ def is_segment_inside_track(face_start, face_end, sent_start, sent_end, tol=0.1)
     # Check if the sentence start and end times are within the face track times with tolerance
     return (face_start - tol <= sent_start <= face_end + tol) and (face_start - tol <= sent_end <= face_end + tol)
 
-def align_track_to_segments(track, segments, min_clip_len=0.9, verbose=False):
+def align_track_to_segments(track, segments, min_clip_len=0.9, word_level=True, verbose=False):
     """
     Gets the Sentence Segments that align with a face track
 
@@ -129,6 +129,7 @@ def align_track_to_segments(track, segments, min_clip_len=0.9, verbose=False):
     - track (dict): dictionary containing face track metadata {keys: ['start', 'end', 'input_path', 'output_path']}
     - segments (dict): dict containing sentence segments from the input video (WhisperX aligned_segment format)
     - min_clip_length (float): minimum clip length to consider (default = 0.9)
+    - word_level (bool): Whether word level timestamps are available so segments can be aligned at word level
 
     Returns:
     - clips (dict): contains the sentence clips for this face track
@@ -155,12 +156,15 @@ def align_track_to_segments(track, segments, min_clip_len=0.9, verbose=False):
                 continue
 
             clip = {'sentence': segment['text'], 'start': seg_st, 'end': seg_end,
-                    'words': segment['words'], 'seg_id': seg_id}
+                    'seg_id': seg_id}
+
+            if word_level:
+                clip['words'] = segment['words']
             clips.append(clip)
             if verbose:
                 print(f"ID: {seg_id} | Start: {seg_st} | End: {seg_end} | Sentence: {segment['text']}")
         # The start of the sentence overlaps with the face track
-        elif is_segment_inside_track(track_st, track_end, seg_st, track_end):
+        elif word_level and is_segment_inside_track(track_st, track_end, seg_st, track_end):
             
             if verbose:
                 print(f"Start of Segment {seg_id} is overlapping with track")
@@ -193,7 +197,7 @@ def align_track_to_segments(track, segments, min_clip_len=0.9, verbose=False):
             if verbose:
                 print(f"ID: {seg_id} | Start: {seg_st} | End: {seg_end} | Sentence: {sentence}")
         # The end of the sentence overlaps with the face track
-        elif is_segment_inside_track(track_st, track_end, track_st, seg_end):
+        elif word_level and is_segment_inside_track(track_st, track_end, track_st, seg_end):
             if verbose:
                 print(f"End of Segment {seg_id} is overlapping with track")
             all_words = segment['words'][::-1] # starting from the ending words
@@ -254,13 +258,12 @@ def save_track_clips(face_track, track_id, track_clips, input_vid_dir, output_cl
     for clip in track_clips:
         clip_st = clip['start']
         clip_end = clip['end']
-        print(f"{clip_st = } | {clip_end = }")
-        print(f"{roundoff = }")
-        if roundoff:
-            print(f"INSIDE Roundoff")
-            clip_st = round_down(clip_st)
-            clip_end = round_up(clip_end)
-        print(f"{clip_st = } | {clip_end = }")
+        # print(f"{clip_st = } | {clip_end = }")
+        # print(f"{roundoff = }")
+        # if roundoff:
+        #     print(f"INSIDE Roundoff")
+        #     clip_st = round_down(clip_st)
+        #     clip_end = round_up(clip_end)
         seg_id = clip['seg_id']
         sentence = clip['sentence']
 

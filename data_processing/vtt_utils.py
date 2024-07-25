@@ -85,6 +85,7 @@ def read_vtt(file_path):
 
 def process_vtt_entries(entries):
     new_entries = []
+    id = 0
     for entry in entries:
         new_entry = {}
         text = clean_caption_line(entry['text'])
@@ -92,6 +93,8 @@ def process_vtt_entries(entries):
         end = convert_to_seconds(entry['end'])
         if text:
             new_entry.update({'text': text, 'start': start, 'end': end})
+            new_entry['id'] = id
+            id += 1
             new_entries.append(new_entry)
     
     return new_entries
