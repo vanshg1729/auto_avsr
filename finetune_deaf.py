@@ -1,0 +1,89 @@
+import os
+import hydra
+import logging
+
+import torch
+from pytorch_lightning import seed_everything, Trainer
+from pytorch_lightning.callbacks import LearningRateMonitor, ModelCheckpoint
+from avg_ckpts import ensemble
+from datamodule.data_module_phrase import DataModulePhrase
+from lightning_grid import ModelModule
+from pytorch_lightning.loggers import WandbLogger, CSVLogger
+from utils.finetune_utils import *
+import wandb
+
+@hydra.main(version_base="1.3", config_path="configs", config_name="config")
+def main(cfg):
+    seed_everything(42, workers=True)
+
+    print(f"Inside main() function")
+    speaker = cfg.speaker
+    train_size = cfg.train_size
+    finetune_type = cfg.finetune
+    print(f"{cfg.finetune = }")
+    finetune_func = finetune_funcs[finetune_type]
+    lr = cfg.optimizer.lr
+    wd = cfg.optimizer.weight_decay
+
+    project_name = "auto_avsr_benny_deaf_finetuning"
+    # run_name = f"{speaker}_{finetune_type}_finetuning_lr{lr}_wd{wd}"
+    run_name = "test_run"
+    # run_name = f"{speaker}_freeze_frontend3D_finetuning_default_lr1e-4"
+    cfg.log_folder = os.path.join(cfg.logging_dir, f"{project_name}/{run_name}")
+    cfg.exp_dir = cfg.log_folder
+    cfg.trainer.default_root_dir = cfg.log_folder
+    os.makedirs(cfg.log_folder, exist_ok=True)
+    print(f"\nLogging Directory: {cfg.log_folder}")
+
+    checkpoint = ModelCheckpoint(
+        # monitor="monitoring_step",
+        # mode="max",
+        verbose=True,
+        every_n_epochs=1,
+        save_on_train_epoch_end=True,
+        # dirpath=cfg.log_folder,
+        save_last=True,
+        # filename="{epoch}",
+        save_top_k=-1,
+    )
+    lr_monitor = LearningRateMonitor(logging_interval="step")
+    callbacks = [checkpoint, lr_monitor]
+
+    # Logging Stuff
+    loggers = []
+    csv_logger = CSVLogger(
+        save_dir=cfg.log_folder,
+        flush_logs_every_n_steps=1
+    )
+    loggers.append(csv_logger)
+    if cfg.wandb:
+        wandb_logger = WandbLogger(
+            name=run_name,
+            project=project_name,
+            # config=cfg,
+            settings=wandb.Settings(code_dir='.')
+        )
+        loggers.append(wandb_logger)
+
+    modelmodule = ModelModule(cfg)
+    # finetune_func(modelmodule.model)
+    # freeze_frontend3D(modelmodule.model)
+
+    print(f"{cfg.trainer = }")
+    datamodule = DataModulePhrase(cfg)
+    trainer = Trainer(
+        **cfg.trainer,
+        strategy='ddp_find_unused_parameters_true',
+        logger=loggers,
+        callbacks=callbacks,
+    )
+    print(f"{trainer.num_devices = }")
+    print(f"{trainer.device_ids = }")
+
+    trainer.fit(model=modelmodule, datamodule=datamodule)
+    # ckpt_path = '/ssd_scratch/cvit/vanshg/auto_avsr_phrase_finetuning/vansh2_decoder_finetuning/lightning_logs/version_1/checkpoints/epoch=1-step=80.ckpt'
+    # trainer.validate(model=modelmodule, verbose=True, datamodule=datamodule, loggers=loggers)
+    # ensemble(cfg)
+
+if __name__ == "__main__":
+    main()

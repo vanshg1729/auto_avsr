@@ -29,20 +29,20 @@ parser = argparse.ArgumentParser(description="Phrases Preprocessing")
 parser.add_argument(
     "--data-dir",
     type=str,
-    default='./datasets/deaf-youtube',
+    default='/ssd_scratch/cvit/vanshg/datasets/deaf-youtube',
     help="Directory of original dataset",
 )
 parser.add_argument(
     "--detector",
     type=str,
-    default="face_alignment",
+    default="retinaface",
     choices=['retinaface', 'yolov5', 'face_alignment'],
-    help="Type of face detector. (Default: face_alignment)",
+    help="Type of face detector. (Default: retinaface)",
 )
 parser.add_argument(
     "--root-dir",
     type=str,
-    default='./datasets/deaf-youtube',
+    default='/ssd_scratch/cvit/vanshg/datasets/deaf-youtube',
     help="Root directory of preprocessed dataset",
 )
 parser.add_argument(
@@ -259,7 +259,7 @@ def main(args):
     print(f"Total number of Video Files: {len(video_files)}")
     print(f"{video_files[0] = }")
 
-    for video_idx, video_path in enumerate(tqdm(video_files), desc="Processing Video"):
+    for video_idx, video_path in enumerate(tqdm(video_files, desc="Processing Video")):
         process_video_file(video_path, args, video_id=video_idx)
 
     print(f"WROTE FACE_TRACKS OF ALL VIDEOS OF SPEAKER {args.speaker} !!!")

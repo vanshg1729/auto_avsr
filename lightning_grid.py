@@ -1,5 +1,6 @@
 import os
 import csv
+import numpy as np
 
 import torch
 import torchaudio
@@ -16,6 +17,9 @@ from espnet.nets.lm_interface import dynamic_import_lm
 from espnet.nets.scorers.ctc import CTCPrefixScorer
 from espnet.nets.scorers.length_bonus import LengthBonus
 import wandb
+
+def get_lr(opt):
+    return opt.param_groups[0]['lr']
 
 def print_stats(stats_dict):
     print(f"\n{20*'-'}STATS{20*'-'}")
@@ -65,12 +69,14 @@ class ModelModule(LightningModule):
             else:
                 self.model.load_state_dict(ckpt)
         
+        self.log_dir = None
         self.epoch_loss = 0.0
         self.epoch_acc = 0.0
         self.epoch_loss_ctc = 0.0
         self.epoch_loss_att = 0.0
         self.epoch_size = 0.0
         self.print_every = 100
+        self.cur_train_step = 0
         self.result_data = []
 
     def configure_optimizers(self):
@@ -78,6 +84,7 @@ class ModelModule(LightningModule):
         scheduler = WarmupCosineScheduler(optimizer, self.cfg.optimizer.warmup_epochs, self.cfg.trainer.max_epochs, len(self.trainer.datamodule.train_dataloader()))
         scheduler = {"scheduler": scheduler, "interval": "step", "frequency": 1}
         return [optimizer], [scheduler]
+        # return [optimizer]
 
     def forward(self, sample):
         """
@@ -108,53 +115,95 @@ class ModelModule(LightningModule):
     def training_step(self, batch, batch_idx):
         return self._step(batch, batch_idx, step_type="train")
 
-    def validation_step(self, batch, batch_idx):
+    def validation_step(self, batch, batch_idx, dataloader_idx=0):
         """
             - batch: tensor of shape (T, 1, H, W)
         """
+        # Preparing the input for the model
+        idx = dataloader_idx # idx is same as dataloader index
         inputs = batch['input'].transpose(0, 1).unsqueeze(0) # (B=1, C=1, T, H, W)
         enc_feat, _ = self.model.encoder(inputs.to(self.device), None)
         enc_feat = enc_feat.squeeze(0) # (T, D)
 
+        # Getting the predicted output of the model using beam search
         nbest_hyps = self.beam_search(enc_feat)
         nbest_hyps = [h.asdict() for h in nbest_hyps[: min(len(nbest_hyps), 1)]]
         predicted_token_id = torch.tensor(list(map(int, nbest_hyps[0]["yseq"][1:])))
         predicted = self.text_transform.post_process(predicted_token_id).replace("<eos>", "")
 
+        # Calculating the word distance
         token_id = batch["target"]
         actual = self.text_transform.post_process(token_id)
-        word_distance = compute_word_level_distance(actual, predicted)
+        word_distance = compute_word_level_distance(actual, predicted) # edit distance
+        word_distance = torch.tensor(word_distance).to(self.device) # (1, )
+        gt_len = torch.tensor(len(actual.split())).to(self.device) # length of GT sentence (1, )
+        data_id = batch['idx'].to(self.device) # (1, )
 
-        self.total_edit_distance += word_distance
-        self.total_length += len(actual.split())
-        wer = self.total_edit_distance/self.total_length
-        self.log("wer_iter", wer, on_step=True, logger=True, batch_size=1)
+        # Gathering the quantities across devices
+        wd_gahter = self.all_gather(word_distance, sync_grads=False).reshape(-1) # (W, )
+        gt_len_gather = self.all_gather(gt_len, sync_grads=False).reshape(-1) # (W, )
+        data_ids = self.all_gather(data_id, sync_grads=False).reshape(-1) # (W, )
 
+        # Putting the gathered quantities on cpu
+        wd_gather = wd_gahter.to('cpu').numpy() # (W, )
+        gt_len_gather = gt_len_gather.to('cpu').numpy() # (W, )
+        data_ids = data_ids.to('cpu').numpy() # (W, )
+
+        # Combining the gathered quantities with previous data
+        self.ids[idx] = np.concatenate([self.ids[idx], data_ids], axis=0) # (D, )
+        self.word_dists[idx] = np.concatenate([self.word_dists[idx], wd_gather], axis=0) # (D, )
+        self.sent_lengths[idx] = np.concatenate([self.sent_lengths[idx], gt_len_gather], axis=0) # (D, )
+        
+        # Calculating the unique ids of the datapoints
+        _, unique_ids = np.unique(self.ids[idx], return_index=True, axis=0)
+
+        # Printing the ids of data
+        # if self.global_rank == 0:
+        #     print(f"\n{'*' * 70}")
+        #     print(f"{self.ids[idx] = }")
+        #     print(f"{unique_ids = }")
+        #     print(f"{'*' * 70}")
+
+        # Calculating WER based on dataloader index
+        # We are only considering unique data ids here
+        self.total_edit_distance[idx] = self.word_dists[idx][unique_ids].sum()
+        self.total_length[idx] = self.sent_lengths[idx][unique_ids].sum()
+        wer = self.total_edit_distance[idx]/self.total_length[idx]
+        
+        # Logging only from Global Rank 0 process
+        if self.global_rank == 0:
+            if dataloader_idx == 0:
+                self.log("test_wer_iter", wer, on_step=True, logger=True, batch_size=1)
+            else:
+                self.log(f"val{idx}_wer_iter", wer, on_step=True, batch_size=1)
+
+        # Printing Stats for this datapoint
         if self.cfg.verbose:
-            print(f"\n{'*' * 70}")
-            print(f"{batch_idx} GT: {actual}")
-            print(f"{batch_idx} Pred: {predicted}")
-
-            print(f"{batch_idx} dist = {word_distance}, len: {len(actual.split())}")
-            print(f"{batch_idx} Sentence WER: {word_distance/len(actual.split())}")
-            print(f"{batch_idx} Cur WER: {wer}")
-            print(f"{'*' * 70}")
+            print(f"\n{'*' * 70}"
+                  + f"\n{dataloader_idx = }"
+                  + f"\n{data_id} GT: {actual}"
+                  + f"\n{data_id} Pred: {predicted}"
+                  + f"\n{data_id} dist = {word_distance}, len: {len(actual.split())}"
+                  + f"\n{data_id} Sentence WER: {word_distance/len(actual.split())}"
+                  + f"\n{data_id} Cur WER: {wer}"
+                  + f"\n{'*' * 70}")
 
         # Results.csv data for this epoch
         if self.loggers and self.result_data:
-            gt_len = len(actual)
-            wd = word_distance
+            gt_len = gt_len.item()
+            wd = word_distance.item()
             data = [
+                data_id.item(),
                 actual,
                 predicted,
                 gt_len,
                 wd,
                 wd/gt_len,
-                self.total_length,
-                self.total_edit_distance,
+                self.total_length[idx],
+                self.total_edit_distance[idx],
                 wer
             ]
-            self.result_data.append(data)
+            self.result_data[idx].append(data)
 
         return
 
@@ -196,6 +245,15 @@ class ModelModule(LightningModule):
             self.epoch_loss_att += loss_att.item() * batch_size
             self.epoch_acc += acc * batch_size
             self.epoch_size += batch_size
+            opt = self.optimizers()
+            self.cur_lr = get_lr(opt)
+            if self.global_rank == 0:
+                # print(f"{self.cur_train_step = } | {self.cur_lr = }")
+                lr_dict = {'train_step': self.cur_train_step, 'lr': self.cur_lr}
+                if self.cfg.wandb:
+                    wandb.log(lr_dict)
+
+            self.cur_train_step += 1
 
             # self.log("loss_step", self.epoch_loss/self.epoch_size, on_step=True, logger=True, prog_bar=True)
             # self.log("loss_ctc_step", self.epoch_loss_ctc/self.epoch_size, on_step=True, logger=True)
@@ -208,75 +266,117 @@ class ModelModule(LightningModule):
             self.log("loss_att_val", loss_att, batch_size=batch_size)
             self.log("decoder_acc_val", acc, batch_size=batch_size)
 
-        if step_type == "train":
+        if step_type == "train" and self.global_rank == 0:
             self.log("monitoring_step", torch.tensor(self.global_step, dtype=torch.float32))
 
         return loss
 
     def on_train_epoch_start(self):
-        # sampler = self.trainer.train_dataloader.loaders.batch_sampler
-        # if hasattr(sampler, "set_epoch"):
-        #     sampler.set_epoch(self.current_epoch)
-        self.epoch_loss = 0.0
-        self.epoch_acc = 0.0
-        self.epoch_loss_ctc = 0.0
-        self.epoch_loss_att = 0.0
-        self.epoch_size = 0.0
+        if self.log_dir is None:
+            if self.loggers:
+                self.log_dir = self.loggers[0].log_dir
+                print(f"{self.log_dir = }")
+                if self.cfg.wandb and self.global_rank == 0:
+                    wandb.log({'log_dir': self.log_dir})
+            
+        self.epoch_loss = torch.tensor(0.0).to(self.device)
+        self.epoch_acc = torch.tensor(0.0).to(self.device)
+        self.epoch_loss_ctc = torch.tensor(0.0).to(self.device)
+        self.epoch_loss_att = torch.tensor(0.0).to(self.device)
+        self.epoch_size = torch.tensor(0.0).to(self.device)
         return super().on_train_epoch_start()
     
     def on_train_epoch_end(self) -> None:
-        log_dict = {
-            "loss_epoch": self.epoch_loss/self.epoch_size,
-            "loss_ctc_epoch": self.epoch_loss_ctc/self.epoch_size,
-            "loss_att_epoch": self.epoch_loss_att/self.epoch_size,
-            "decoder_acc_epoch": self.epoch_acc/self.epoch_size,
-            "epoch": self.current_epoch
-        }
-        self.log_dict(log_dict, logger=True)
-        print_stats(log_dict)
+        # Gathering the values across GPUs
+        self.epoch_loss = self.all_gather(self.epoch_loss, sync_grads=False).sum()
+        self.epoch_loss_ctc = self.all_gather(self.epoch_loss_ctc, sync_grads=False).sum()
+        self.epoch_loss_att = self.all_gather(self.epoch_loss_att, sync_grads=False).sum()
+        self.epoch_acc = self.all_gather(self.epoch_acc, sync_grads=False).sum()
+        self.epoch_size = self.all_gather(self.epoch_size, sync_grads=False).sum()
+
+        # Logging from process with global rank = 0
+        if self.global_rank == 0:
+            log_dict = {
+                "loss_epoch": self.epoch_loss/self.epoch_size,
+                "loss_ctc_epoch": self.epoch_loss_ctc/self.epoch_size,
+                "loss_att_epoch": self.epoch_loss_att/self.epoch_size,
+                "decoder_acc_epoch": self.epoch_acc/self.epoch_size,
+                "epoch": self.current_epoch
+            }
+            self.log_dict(log_dict, logger=True)
+            print_stats(log_dict)
 
         return super().on_train_epoch_end()
 
     def on_validation_epoch_start(self):
-        self.total_length = 0
-        self.total_edit_distance = 0
+        self.num_val_loaders = len(self.trainer.val_dataloaders)
+        self.total_length = [0 for i in range(self.num_val_loaders)]
+        self.total_edit_distance = [0 for i in range(self.num_val_loaders)]
+        self.result_data = [[] for i in range(self.num_val_loaders)]
+        
+        # For storing the metrics across GPUs and dataloaders
+        # each individual [] will store the metrics for that val loader
+        self.ids = [np.array([]) for i in range(self.num_val_loaders)]
+        self.word_dists = [np.array([]) for i in range(self.num_val_loaders)]
+        self.sent_lengths = [np.array([]) for i in range(self.num_val_loaders)]
 
         if self.loggers:
             results_dir = os.path.join(self.loggers[0].log_dir, f"results")
             self.results_dir = results_dir
+            self.results_filepaths = ['' for idx in range(self.num_val_loaders)]
 
+            # Making the results.csv files to analyse the generated output text
             os.makedirs(results_dir, exist_ok=True)
-            results_fp = os.path.join(results_dir, f"test_results_epoch{self.current_epoch}.csv")
-            self.results_fp = results_fp
-            row_names = [
-                "Ground Truth Text",
-                "Predicted Text",
-                "Length",
-                "Word Distance",
-                "WER",
-                "Total Length",
-                "Total Word Distance",
-                "Final WER"
-            ]
-            self.result_data = [row_names]
+            for i in range(self.num_val_loaders):
+                if i == 0:
+                    results_filename = f"test_results_epoch{self.current_epoch}.csv"
+                else:
+                    results_filename = f"val{i}_results_epoch{self.current_epoch}.csv"
+
+                results_fp = os.path.join(results_dir, results_filename)
+                self.results_filepaths[i] = results_fp
+
+                # Wrote the column names to the results csv file (only from global rank = 0)
+                if self.global_rank == 0:
+                    row_names = [
+                        "Index",
+                        "Ground Truth Text",
+                        "Predicted Text",
+                        "Length",
+                        "Word Distance",
+                        "WER",
+                        "Total Length",
+                        "Total Word Distance",
+                        "Final WER"
+                    ]
+                    with open(self.results_filepaths[i], mode='w') as file:
+                        writer = csv.writer(file, delimiter=',')
+                        writer.writerows(row_names)
 
     def on_validation_epoch_end(self) -> None:
-        wer = self.total_edit_distance/self.total_length
-        log_dict = {
-            "wer_test_epoch": wer,
-            "epoch": self.current_epoch
-        }
-        if self.cfg.wandb:
-            wandb.log(log_dict)
-        else:
-            self.log_dict(log_dict, logger=True)
-        print_stats(log_dict)
+        # Loop over the results of all the different validation loaders
+        for idx in range(self.num_val_loaders):
+            # Only do logging from Global Rank = 0 process
+            if self.global_rank == 0:
+                wer = self.total_edit_distance[idx]/self.total_length[idx]
+                log_dict = {'epoch': self.current_epoch}
+                if idx == 0:
+                    log_dict['wer_test_epoch'] = wer
+                else:
+                    log_dict[f"wer_val{idx}_epoch"] = wer
 
-        if self.loggers and self.result_data:
-            with open(self.results_fp, mode='w') as file:
-                writer = csv.writer(file, delimiter=',')
-                writer.writerows(self.result_data)
-                print(f"{self.current_epoch = } Successfully written the test results data at {self.results_fp}")
+                if self.cfg.wandb:
+                    wandb.log(log_dict)
+                else:
+                    self.log_dict(log_dict, logger=True)
+                print_stats(log_dict)
+
+            # Write the csv results file for the corresponding val dataloader
+            if self.loggers and self.result_data[idx]:
+                with open(self.results_filepaths[idx], mode='a') as file:
+                    writer = csv.writer(file, delimiter=',')
+                    writer.writerows(self.result_data[idx])
+                    print(f"{self.current_epoch = } Successfully written the results data at {self.results_filepaths[idx]}")
 
         return super().on_validation_epoch_end()
 

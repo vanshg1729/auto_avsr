@@ -39,6 +39,11 @@ def pad(samples, pad_val=0.0):
 def collate_pad(batch):
     batch_out = {}
     for data_type in batch[0].keys():
+        if data_type == 'idx':
+            batch_out['ids'] = torch.tensor(
+                [s[data_type] for s in batch]
+            )
+            continue
         pad_val = -1 if data_type == "target" else 0.0
         c_batch, sample_lengths = pad(
             [s[data_type] for s in batch if s[data_type] is not None], pad_val
@@ -60,8 +65,8 @@ class DataModulePhrase(LightningDataModule):
 
         return torch.utils.data.DataLoader(
             ds,
-            batch_size=5,
-            num_workers=1,
+            batch_size=1,
+            num_workers=4,
             pin_memory=True,
             collate_fn=collate_fn,
             worker_init_fn=seed_worker,
@@ -95,22 +100,40 @@ class DataModulePhrase(LightningDataModule):
     #         sampler = DistributedSamplerWrapper(sampler, shuffle=False, drop_last=True)
     #     return self._dataloader(val_ds, sampler, collate_pad)
 
-    def val_dataloader(self):
+    def _val_dataloader(self, ds):
         g = torch.Generator()
         g.manual_seed(0)
 
-        ds_args = self.cfg.data.dataset
-        dataset = PhraseDataset(
-            root_dir=ds_args.root_dir,
-            label_path=ds_args.test_file,
-            video_transform=VideoTransform("test"),
-            subset="test",
-        )
         dataloader = torch.utils.data.DataLoader(
-            dataset,
-            batch_size=None, 
+            ds,
+            batch_size=None,
             num_workers=1,
             worker_init_fn=seed_worker,
             generator=g
         )
         return dataloader
+
+    def val_dataloader(self):
+        ds_args = self.cfg.data.dataset
+
+        val_dataloaders = []
+        if ds_args.test_file is not None:
+            dataset = PhraseDataset(
+                root_dir=ds_args.root_dir,
+                label_path=ds_args.test_file,
+                video_transform=VideoTransform("test"),
+                subset="test",
+            )
+            dataloader = self._val_dataloader(dataset)
+            val_dataloaders.append(dataloader)
+
+        if ds_args.val_file is not None:
+            dataset = PhraseDataset(
+                root_dir=ds_args.root_dir,
+                label_path=ds_args.val_file,
+                video_transform=VideoTransform("test"),
+                subset="test",
+            )
+            dataloader = self._val_dataloader(dataset)
+            val_dataloaders.append(dataloader)
+        return val_dataloaders
