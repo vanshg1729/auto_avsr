@@ -46,6 +46,10 @@ def finetune_encoder(model):
     model.requires_grad_(False)
     unfreeze_encoder(model)
 
+def finetune_frontend(model):
+    model.requires_grad_(False)
+    unfreeze_frontend(model)
+
 def finetune_decoder(model):
     model.requires_grad_(False)
     unfreeze_decoder(model)
@@ -61,6 +65,7 @@ def finetune_encoders(model):
 finetune_funcs = {
     "full": finetune_full,
     "encoder": finetune_encoder,
+    "frontend": finetune_frontend,
     "encoders": finetune_encoders,
     "decoder": finetune_decoder,
     "ctc": finetune_ctc,

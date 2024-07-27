@@ -18,7 +18,6 @@ def main(cfg):
 
     print(f"Inside main() function")
     speaker = cfg.speaker
-    train_size = cfg.train_size
     finetune_type = cfg.finetune
     print(f"{cfg.finetune = }")
     finetune_func = finetune_funcs[finetune_type]
@@ -26,8 +25,7 @@ def main(cfg):
     wd = cfg.optimizer.weight_decay
 
     project_name = "auto_avsr_benny_deaf_finetuning"
-    # run_name = f"{speaker}_{finetune_type}_finetuning_lr{lr}_wd{wd}"
-    run_name = "test_run"
+    run_name = f"{speaker}_{finetune_type}_finetuning_const_lr{lr}_wd{wd}"
     # run_name = f"{speaker}_freeze_frontend3D_finetuning_default_lr1e-4"
     cfg.log_folder = os.path.join(cfg.logging_dir, f"{project_name}/{run_name}")
     cfg.exp_dir = cfg.log_folder
@@ -35,6 +33,7 @@ def main(cfg):
     os.makedirs(cfg.log_folder, exist_ok=True)
     print(f"\nLogging Directory: {cfg.log_folder}")
 
+    # LR and Checkpoint callbacks
     checkpoint = ModelCheckpoint(
         # monitor="monitoring_step",
         # mode="max",
@@ -65,10 +64,12 @@ def main(cfg):
         )
         loggers.append(wandb_logger)
 
+    # Creating the Model Object
     modelmodule = ModelModule(cfg)
-    # finetune_func(modelmodule.model)
+    finetune_func(modelmodule.model)
     # freeze_frontend3D(modelmodule.model)
 
+    # Creating the Trainer Object
     print(f"{cfg.trainer = }")
     datamodule = DataModulePhrase(cfg)
     trainer = Trainer(
@@ -80,9 +81,9 @@ def main(cfg):
     print(f"{trainer.num_devices = }")
     print(f"{trainer.device_ids = }")
 
-    trainer.fit(model=modelmodule, datamodule=datamodule)
-    # ckpt_path = '/ssd_scratch/cvit/vanshg/auto_avsr_phrase_finetuning/vansh2_decoder_finetuning/lightning_logs/version_1/checkpoints/epoch=1-step=80.ckpt'
-    # trainer.validate(model=modelmodule, verbose=True, datamodule=datamodule, loggers=loggers)
+    ckpt_path = '/ssd_scratch/cvit/vanshg/auto_avsr_benny_deaf_finetuning/benny_frontend_finetuning_const_lr0.001_wd0.03/lightning_logs/version_1/checkpoints/epoch=7-step=680.ckpt'
+    trainer.fit(model=modelmodule, datamodule=datamodule, ckpt_path=ckpt_path)
+    # trainer.validate(model=modelmodule, verbose=True, datamodule=datamodule)
     # ensemble(cfg)
 
 if __name__ == "__main__":

@@ -351,7 +351,7 @@ class ModelModule(LightningModule):
                     ]
                     with open(self.results_filepaths[i], mode='w') as file:
                         writer = csv.writer(file, delimiter=',')
-                        writer.writerows(row_names)
+                        writer.writerow(row_names)
 
     def on_validation_epoch_end(self) -> None:
         # Loop over the results of all the different validation loaders
