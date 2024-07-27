@@ -169,15 +169,14 @@ def align_track_to_segments(track, segments, min_clip_len=0.9, word_level=True, 
             if verbose:
                 print(f"Start of Segment {seg_id} is overlapping with track")
             all_words = segment['words']
-            seg_st = track_st
-            seg_end = track_st
+            seg_end = seg_st
             word_segs = []
             words = []
             
             # Finding the list of overlapping words
             for word_id, word in enumerate(all_words):
                 # Doing this because WhisperX doesn't give timestamps to numerals like "2014" or "6.1"
-                word_st, word_end = word.get('start', seg_end), word.get('end', track_end)
+                word_st, word_end = word.get('start', seg_end), word.get('end', seg_end)
                 if is_segment_inside_track(track_st, track_end, word_st, word_end):
                     if len(words) == 0:
                         seg_st = word_st
@@ -201,15 +200,14 @@ def align_track_to_segments(track, segments, min_clip_len=0.9, word_level=True, 
             if verbose:
                 print(f"End of Segment {seg_id} is overlapping with track")
             all_words = segment['words'][::-1] # starting from the ending words
-            seg_st = track_end
-            seg_end = track_end
+            seg_st = seg_end
             word_segs = []
             words = []
             
             # Finding the list of overlapping words
             for word_id, word in enumerate(all_words):
                 # Doing this because WhisperX doesn't give timestamps to numerals like "2014" or "6.1"
-                word_st, word_end = word.get('start', track_st), word.get('end', seg_st)
+                word_st, word_end = word.get('start', seg_st), word.get('end', seg_st)
                 if is_segment_inside_track(track_st, track_end, word_st, word_end):
                     if len(words) == 0:
                         seg_end = word_end

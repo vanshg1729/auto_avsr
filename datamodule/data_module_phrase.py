@@ -107,9 +107,10 @@ class DataModulePhrase(LightningDataModule):
         dataloader = torch.utils.data.DataLoader(
             ds,
             batch_size=None,
+            shuffle=False,
             num_workers=1,
             worker_init_fn=seed_worker,
-            generator=g
+            generator=g,
         )
         return dataloader
 
