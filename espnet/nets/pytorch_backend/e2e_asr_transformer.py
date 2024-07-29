@@ -337,10 +337,11 @@ class E2E(torch.nn.Module):
             x = self.proj_decoder(x)
 
         # decoder loss
+        # ys_in_pad, ys_out_pad = (B, Lmax)
         ys_in_pad, ys_out_pad = add_sos_eos(label, self.sos, self.eos, self.ignore_id)
         ys_mask = target_mask(ys_in_pad, self.ignore_id)
-        pred_pad, _ = self.decoder(ys_in_pad, ys_mask, x, padding_mask)
-        loss_att = self.criterion(pred_pad, ys_out_pad)
+        pred_pad, _ = self.decoder(ys_in_pad, ys_mask, x, padding_mask) # (B, Lmax, odim)
+        loss_att = self.criterion(pred_pad, ys_out_pad) # Label smoothing loss
         loss = self.mtlalpha * loss_ctc + (1 - self.mtlalpha) * loss_att
 
         acc = th_accuracy(

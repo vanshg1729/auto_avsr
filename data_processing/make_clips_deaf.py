@@ -30,13 +30,13 @@ parser = argparse.ArgumentParser(description="Phrases Preprocessing")
 parser.add_argument(
     "--data-dir",
     type=str,
-    default='../datasets/deaf-youtube/',
+    default='/ssd_scratch/cvit/vanshg/datasets/deaf-youtube/',
     help="Directory of original dataset",
 )
 parser.add_argument(
     "--root-dir",
     type=str,
-    default='../datasets/deaf-youtube',
+    default='/ssd_scratch/cvit/vanshg/datasets/deaf-youtube',
     help="Root directory of preprocessed dataset",
 )
 parser.add_argument(
