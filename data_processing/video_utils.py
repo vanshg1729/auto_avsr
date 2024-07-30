@@ -79,13 +79,13 @@ def video_frame_batch_generator(video_path, batch_size):
         frame_idx += 1
 
         if len(batch_frames) == batch_size:
-            yield batch_frames, batch_indices
+            yield batch_indices, batch_frames
             batch_frames = []
             batch_indices = []
 
     # Yield the last batch if it's not empty
     if batch_frames:
-        yield batch_frames, batch_indices
+        yield batch_indices, batch_frames
 
     cap.release()
 

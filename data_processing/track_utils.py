@@ -8,28 +8,51 @@ from video_utils import save2vid_opencv
 
 def get_batch_prediction_retinaface(frames, face_detector):
     preds = []
-    for frame_idx, frame in enumerate(tqdm(frames, desc="Getting RetinaFace preds")):
+    for frame_idx, frame in enumerate(frames):
          pred = face_detector(frame)
          preds.append(pred)
     
     return preds
 
 def get_bboxes_from_retina_preds(preds):
+    """
+    Parameters:
+    - preds (list): list of numpy array containing (N_i, 15) retinaface prediction
+
+    Returns:
+    - bboxes (list): list of numpy array containing (N_i, 4) bounding boxes
+    """
     bboxes = []
-    for pred_id, pred in enumerate(tqdm(preds, desc="Getting bbox from preds")):
+    for pred_id, pred in enumerate(preds):
         frame_bboxes = []
         for bbox in pred:
             (x1, y1, x2, y2) = bbox[:4]
             w, h = (x2 - x1), (y2 - y1)
             new_bbox = (x1, y1, w, h)
             frame_bboxes.append(new_bbox)
+
+        frame_bboxes = np.array(frame_bboxes)
         bboxes.append(frame_bboxes)
     
     return bboxes
 
 def get_batch_prediction_yolov5(frames, face_detector):
+     frames_bboxes = []
      bboxes, points = face_detector.predict(frames)
-     return bboxes
+
+     for frame_bboxes in bboxes:
+        frame_boxes = []
+        for bbox in frame_bboxes:
+            if not len(bbox):
+                continue
+            (x1, y1, x2, y2) = bbox
+            w, h = (x2 - x1), (y2 - y1)
+            new_bbox = (x1, y1, w, h)
+            frame_boxes.append(new_bbox)
+        frame_boxes = np.array(frame_boxes)
+        frames_bboxes.append(frame_boxes)
+
+     return frames_bboxes
 
 def draw_bboxes(frames, bboxes):
     frames_with_bbox = np.copy(frames)
