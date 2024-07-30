@@ -64,7 +64,7 @@ class AVSRDataLoader:
 
     def load_video(self, data_filename):
         """
-        NOTE: There is some issue with torchvision.io.read_video and it doesn't read the entire video
+        NOTE: There was some issue (got fixed) with torchvision.io.read_video and it doesn't read the entire video
         """
         return torchvision.io.read_video(data_filename, pts_unit="sec")[0].numpy()
 

@@ -32,7 +32,7 @@ def clean_caption_line(line):
     # To handle cases like Deaf/HoH or August/September
     line = re.sub(r'/', ' ', line)
 
-    # Note: Maybe also handle cases like Ooo or Erm
+    # Note: Maybe also handle cases like Ooo or Erm, Hmm
     # Case : Deaf/HoH (source : XlEO7pWAc84 benny)
 
     # Remove consecutive non-word characters (e.g., --, ---, …)
