@@ -1,7 +1,7 @@
 #!/bin/bash
 
-#SBATCH -A research
-#SBATCH --nodelist=gnode076
+#SBATCH -A vanshg
+#SBATCH --nodelist=gnode073
 #SBATCH --gres=gpu:1
 #SBATCH --mem-per-cpu=2G
 #SBATCH -c 18
@@ -12,4 +12,4 @@
 cd ~/auto_avsr
 git checkout personalization
 
-python3 data_processing/whisperx_lip2wav.py --speaker chem --model large-v3
+python3 data_processing/whisperx_lip2wav.py --speaker hs --model large-v3

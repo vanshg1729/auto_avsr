@@ -6,6 +6,7 @@ import pickle
 import shutil
 import warnings
 import string
+import cv2
 
 import ffmpeg
 from data.data_module import AVSRDataLoader
@@ -13,8 +14,8 @@ from tqdm import tqdm
 from transforms import TextTransform
 from utils import save_vid_aud_txt, split_file
 
-data_dir = "/ssd_scratch/cvit/vanshg/datasets/deaf-youtube"
-speaker_name = "benny"
+data_dir = "/ssd_scratch/cvit/vanshg/Lip2Wav/Dataset"
+speaker_name = "dl"
 
 src_speaker_dir = os.path.join(data_dir, f"{speaker_name}")
 src_video_dir = os.path.join(src_speaker_dir, "processed_videos")
@@ -48,15 +49,28 @@ f = open(dst_label_file, "w")
 print(f"DST Label File: {dst_label_file}")
 
 for video_idx, video_file in enumerate(tqdm(video_files, desc="Creating Labels for videos")):
+    cap = cv2.VideoCapture(video_file)
+    total_frames = cap.get(cv2.CAP_PROP_FRAME_COUNT)
+    cap.release()
+    
     video_fname = os.path.basename(video_file).split('.')[0]
 
     dst_txt_filename = os.path.join(src_text_dir, f"{video_fname}.txt")
     gt_text = get_gt_text(dst_txt_filename)
+    gt_len = len(gt_text.split())
 
-    basename = f"processed_videos/{video_fname}.mp4"
+    if total_frames > 500 or total_frames <= 0:
+        print(f"File {video_idx = } {video_file} with has {total_frames = }")
+        continue
+
+    if gt_len == 0:
+        print(f"File {video_idx = } {video_file} HAS 0 GT LEN")
+        continue
+
+    basename = os.path.relpath(video_file, start=data_dir)
     f.write(
         f"{basename} {gt_text}\n"
     )
-    print(f"{basename} {gt_text}")
+    # print(f"{basename} {gt_text}")
 
 f.close()

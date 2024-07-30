@@ -67,7 +67,6 @@ class DataModulePhrase(LightningDataModule):
             ds,
             batch_size=1,
             num_workers=1,
-            pin_memory=False,
             shuffle=False,
             collate_fn=collate_fn,
             worker_init_fn=seed_worker,
@@ -107,9 +106,10 @@ class DataModulePhrase(LightningDataModule):
 
         dataloader = torch.utils.data.DataLoader(
             ds,
-            batch_size=None,
+            batch_size=5,
             shuffle=False,
             num_workers=1,
+            collate_fn=collate_fn,
             worker_init_fn=seed_worker,
             generator=g,
         )

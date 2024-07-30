@@ -1,0 +1,465 @@
+import os
+import csv
+import numpy as np
+
+import torch
+from torch.optim.lr_scheduler import StepLR
+import torchaudio
+from pytorch_lightning import LightningModule
+
+from cosine import WarmupCosineScheduler
+from datamodule.transforms import TextTransform
+
+from espnet.asr.asr_utils import torch_load
+from espnet.asr.asr_utils import get_model_conf
+from espnet.nets.batch_beam_search import BatchBeamSearch
+from espnet.nets.pytorch_backend.e2e_asr_transformer import E2E
+from espnet.nets.lm_interface import dynamic_import_lm
+from espnet.nets.scorers.ctc import CTCPrefixScorer
+from espnet.nets.scorers.length_bonus import LengthBonus
+import wandb
+
+def get_lr(opt):
+    return opt.param_groups[0]['lr']
+
+def print_stats(stats_dict):
+    print(f"\n{20*'-'}STATS{20*'-'}")
+    for name, value in stats_dict.items():
+        print(f"{name}: {value}")
+    print(f"{50*'-'}\n")
+
+def compute_word_level_distance(seq1, seq2):
+    return torchaudio.functional.edit_distance(seq1.lower().split(), seq2.lower().split())
+
+class ModelModule(LightningModule):
+    def __init__(self, cfg):
+        super().__init__()
+        self.save_hyperparameters(cfg)
+        self.cfg = cfg
+        if self.cfg.data.modality == "audio":
+            self.backbone_args = self.cfg.model.audio_backbone
+        elif self.cfg.data.modality == "video":
+            self.backbone_args = self.cfg.model.visual_backbone
+
+        self.text_transform = TextTransform()
+        self.token_list = self.text_transform.token_list
+        self.model = E2E(len(self.token_list), self.backbone_args)
+
+        # language model configuration
+        rnnlm = self.cfg.rnnlm
+        rnnlm_conf = self.cfg.rnnlm_conf
+        penalty = self.cfg.decode.penalty
+        ctc_weight = self.cfg.decode.ctc_weight
+        lm_weight = self.cfg.decode.lm_weight
+        beam_size = self.cfg.decode.beam_size
+        
+        # beam search decoder
+        self.beam_search = get_beam_search_decoder(self.model, self.token_list, rnnlm, rnnlm_conf, penalty, ctc_weight, lm_weight, beam_size)
+        print(f"init: self.device: {self.device}")
+        self.beam_search.to(device=self.device).eval()
+
+        # -- initialise
+        if self.cfg.pretrained_model_path:
+            ckpt = torch.load(self.cfg.pretrained_model_path, map_location=lambda storage, loc: storage)
+            if self.cfg.transfer_frontend:
+                tmp_ckpt = {k: v for k, v in ckpt["model_state_dict"].items() if k.startswith("trunk.") or k.startswith("frontend3D.")}
+                self.model.encoder.frontend.load_state_dict(tmp_ckpt)
+            elif self.cfg.transfer_encoder:
+                tmp_ckpt = {k.replace("encoder.", ""): v for k, v in ckpt.items() if k.startswith("encoder.")}
+                self.model.encoder.load_state_dict(tmp_ckpt, strict=True)
+            else:
+                self.model.load_state_dict(ckpt)
+        
+        self.log_dir = None
+        self.print_every = 100
+        self.cur_train_step = 0
+        self.result_data = []
+
+    def configure_optimizers(self):
+        optimizer = torch.optim.AdamW([{"name": "model", "params": self.model.parameters(), "lr": self.cfg.optimizer.lr}], weight_decay=self.cfg.optimizer.weight_decay, betas=(0.9, 0.98))
+        # scheduler = WarmupCosineScheduler(optimizer, self.cfg.optimizer.warmup_epochs, self.cfg.trainer.max_epochs, len(self.trainer.datamodule.train_dataloader()))
+        scheduler = StepLR(optimizer, step_size=10, gamma=0.1)
+        scheduler = {"scheduler": scheduler, "interval": "step", "frequency": 1}
+        return [optimizer], [scheduler]
+        # return [optimizer]
+
+    def forward(self, sample):
+        """
+        sample : (B, 1, T, 88, 88)
+        """
+        print(f"self.device = {self.device}")
+        print(f"sample.shape = {sample.shape}")
+        self.beam_search = get_beam_search_decoder(self.model, self.token_list)
+        enc_feat, _ = self.model.encoder(sample.unsqueeze(0).to(self.device), None)
+        print(f"enc_feat.shape = {enc_feat.shape}")
+        enc_feat = enc_feat.squeeze(0) # (B, T, C)
+        print(f"After squeeze: enc_feat.shape = {enc_feat.shape}")
+
+        nbest_hyps = self.beam_search(enc_feat)
+        print(f"\ntype of nbest_hyps: {type(nbest_hyps)}, {len(nbest_hyps)}, {type(nbest_hyps[0])}")
+        temp = nbest_hyps[0].asdict()
+        print(temp.keys())
+        print(f"\nscore : {temp['score']}")
+        print(f"scores: {temp['scores']}")
+        print(f"yseq: {temp['yseq']}")
+        print(f"states: {len(temp['states']['decoder'])}")
+        # print(f"{nbest_hyps[0].asdict()['score']}")
+        nbest_hyps = [h.asdict() for h in nbest_hyps[: min(len(nbest_hyps), 1)]]
+        predicted_token_id = torch.tensor(list(map(int, nbest_hyps[0]["yseq"][1:])))
+        predicted = self.text_transform.post_process(predicted_token_id).replace("<eos>", "")
+        return predicted
+
+    def training_step(self, batch, batch_idx):
+        return self._step(batch, batch_idx, step_type="train")
+
+    def validation_step(self, batch, batch_idx, dataloader_idx=0):
+        return self._step(batch, batch_idx, step_type="val", dataloader_idx=dataloader_idx)
+
+    def test_step(self, batch, batch_idx, dataloader_idx=0):
+        """
+            - batch: tensor of shape (T, 1, H, W)
+        """
+        # Preparing the input for the model
+        idx = dataloader_idx # idx is same as dataloader index
+        inputs = batch['input'].transpose(0, 1).unsqueeze(0) # (B=1, C=1, T, H, W)
+        enc_feat, _ = self.model.encoder(inputs.to(self.device), None)
+        enc_feat = enc_feat.squeeze(0) # (T, D)
+
+        # Getting the predicted output of the model using beam search
+        nbest_hyps = self.beam_search(enc_feat)
+        nbest_hyps = [h.asdict() for h in nbest_hyps[: min(len(nbest_hyps), 1)]]
+        predicted_token_id = torch.tensor(list(map(int, nbest_hyps[0]["yseq"][1:])))
+        predicted = self.text_transform.post_process(predicted_token_id).replace("<eos>", "")
+
+        # Calculating the word distance
+        token_id = batch["target"]
+        actual = self.text_transform.post_process(token_id)
+        word_distance = compute_word_level_distance(actual, predicted) # edit distance
+        word_distance = torch.tensor(word_distance).to(self.device) # (1, )
+        gt_len = torch.tensor(len(actual.split())).to(self.device) # length of GT sentence (1, )
+        data_id = batch['idx'].to(self.device) # (1, )
+
+        # Gathering the quantities across devices
+        wd_gahter = self.all_gather(word_distance, sync_grads=False).reshape(-1) # (W, )
+        gt_len_gather = self.all_gather(gt_len, sync_grads=False).reshape(-1) # (W, )
+        data_ids = self.all_gather(data_id, sync_grads=False).reshape(-1) # (W, )
+
+        # Putting the gathered quantities on cpu
+        wd_gather = wd_gahter.to('cpu').numpy() # (W, )
+        gt_len_gather = gt_len_gather.to('cpu').numpy() # (W, )
+        data_ids = data_ids.to('cpu').numpy() # (W, )
+
+        # Combining the gathered quantities with previous data
+        self.ids[idx] = np.concatenate([self.ids[idx], data_ids], axis=0) # (D, )
+        self.word_dists[idx] = np.concatenate([self.word_dists[idx], wd_gather], axis=0) # (D, )
+        self.sent_lengths[idx] = np.concatenate([self.sent_lengths[idx], gt_len_gather], axis=0) # (D, )
+        
+        # Calculating the unique ids of the datapoints
+        _, unique_ids = np.unique(self.ids[idx], return_index=True, axis=0)
+
+        # Printing the ids of data
+        # if self.global_rank == 0:
+        #     print(f"\n{'*' * 70}")
+        #     print(f"{self.ids[idx] = }")
+        #     print(f"{unique_ids = }")
+        #     print(f"{'*' * 70}")
+
+        # Calculating WER based on dataloader index
+        # We are only considering unique data ids here
+        self.total_edit_distance[idx] = self.word_dists[idx][unique_ids].sum()
+        self.total_length[idx] = self.sent_lengths[idx][unique_ids].sum()
+        wer = self.total_edit_distance[idx]/self.total_length[idx]
+        
+        # Logging only from Global Rank 0 process
+        if self.global_rank == 0:
+            if dataloader_idx == 0:
+                self.log("test_wer_iter", wer, on_step=True, logger=True, batch_size=1)
+            else:
+                self.log(f"val{idx}_wer_iter", wer, on_step=True, batch_size=1)
+
+        # Printing Stats for this datapoint
+        if self.cfg.verbose:
+            print(f"\n{'*' * 70}"
+                  + f"\n{dataloader_idx = }"
+                  + f"\n{data_id} GT: {actual}"
+                  + f"\n{data_id} Pred: {predicted}"
+                  + f"\n{data_id} dist = {word_distance}, len: {len(actual.split())}"
+                  + f"\n{data_id} Sentence WER: {word_distance/len(actual.split())}"
+                  + f"\n{data_id} Cur WER: {wer}"
+                  + f"\n{'*' * 70}")
+
+        # Results.csv data for this epoch
+        if self.loggers and self.result_data:
+            gt_len = gt_len.item()
+            wd = word_distance.item()
+            data = [
+                data_id.item(),
+                actual,
+                predicted,
+                gt_len,
+                wd,
+                wd/gt_len,
+                self.total_length[idx],
+                self.total_edit_distance[idx],
+                wer
+            ]
+            self.result_data[idx].append(data)
+
+        return
+
+    def _get_log_dict(self, step_type="train", dataloader_idx=0):
+        if step_type == "train":
+            logs = {
+                "train_loss_step": self.train_loss/self.train_epoch_size,
+                "train_loss_ctc_step": self.train_loss_ctc/self.train_epoch_size,
+                "train_loss_att_step": self.train_loss_att/self.train_epoch_size,
+                "train_acc_step": self.train_acc/self.train_epoch_size,
+            }
+            return logs
+        elif step_type == "val":
+            idx = dataloader_idx
+            if idx == 0:
+                val_type = "test"
+            else:
+                val_type = f"val{idx}"
+            logs = {
+                f"{val_type}_loss_step": self.val_loss[idx]/self.val_epoch_size[idx],
+                f"{val_type}_loss_ctc_step": self.val_loss_ctc[idx]/self.val_epoch_size[idx],
+                f"{val_type}_loss_att_step": self.val_loss_att[idx]/self.val_epoch_size[idx],
+                f"{val_type}_decoder_acc_step": self.val_acc[idx]/self.val_epoch_size[idx],
+            }
+            return logs
+        else:
+            return {}
+
+    def _step(self, batch, batch_idx, step_type, dataloader_idx=0):
+        B, T, C, H, W = batch['inputs'].shape
+        inputs = batch['inputs'].transpose(1, 2) # (B, C, T, H, W)
+        data_ids = batch['ids'].squeeze()
+
+        loss, loss_ctc, loss_att, acc = self.model(inputs, batch["input_lengths"], batch["targets"])
+        batch_size = len(batch["inputs"])
+        idx = dataloader_idx
+        torch.cuda.empty_cache()
+
+        if step_type == "train":
+            self.train_loss += loss.item() * batch_size
+            self.train_loss_ctc += loss_ctc.item() * batch_size
+            self.train_loss_att += loss_att.item() * batch_size
+            self.train_acc += acc * batch_size
+            self.train_epoch_size += batch_size
+            opt = self.optimizers()
+            self.cur_lr = get_lr(opt)
+
+            if self.global_rank == 0:
+                # print(f"{self.cur_train_step = } | {self.cur_lr = }")
+                lr_dict = {'train_step': self.cur_train_step, 'lr': self.cur_lr}
+                train_logs = self._get_log_dict(step_type)
+                if self.cfg.wandb:
+                    wandb.log(lr_dict)
+                    wandb.log(train_logs)
+
+            self.cur_train_step += 1
+        elif step_type == "val":
+            self.val_loss[idx] += loss.item() * batch_size
+            self.val_loss_ctc[idx] += loss_ctc.item() * batch_size
+            self.val_loss_att[idx] += loss_att.item() * batch_size
+            self.val_acc[idx] += acc * batch_size
+            self.val_epoch_size[idx] += batch_size
+
+            if self.global_rank == 0:
+                val_logs = self._get_log_dict(step_type, dataloader_idx)
+                if self.cfg.wandb:
+                    wandb.log(val_logs) 
+        else:
+            return 0
+
+        if step_type == "train" and self.global_rank == 0:
+            self.log("monitoring_step", torch.tensor(self.global_step, dtype=torch.float32))
+
+        torch.cuda.empty_cache()
+        return loss
+
+    def on_train_epoch_start(self):
+        if self.log_dir is None:
+            if self.loggers:
+                self.log_dir = self.loggers[0].log_dir
+                print(f"{self.log_dir = }")
+                if self.cfg.wandb and self.global_rank == 0:
+                    wandb.log({'log_dir': self.log_dir})
+            
+        self.train_loss = torch.tensor(0.0).to(self.device)
+        self.train_acc = torch.tensor(0.0).to(self.device)
+        self.train_loss_ctc = torch.tensor(0.0).to(self.device)
+        self.train_loss_att = torch.tensor(0.0).to(self.device)
+        self.train_epoch_size = torch.tensor(0.0).to(self.device)
+        return super().on_train_epoch_start()
+    
+    def on_train_epoch_end(self) -> None:
+        # Gathering the values across GPUs
+        self.train_loss = self.all_gather(self.train_loss, sync_grads=False).sum()
+        self.train_loss_ctc = self.all_gather(self.train_loss_ctc, sync_grads=False).sum()
+        self.train_loss_att = self.all_gather(self.train_loss_att, sync_grads=False).sum()
+        self.train_acc = self.all_gather(self.train_acc, sync_grads=False).sum()
+        self.train_epoch_size = self.all_gather(self.train_epoch_size, sync_grads=False).sum()
+
+        # Logging from process with global rank = 0
+        if self.global_rank == 0:
+            log_dict = {
+                "train_loss_epoch": self.train_loss/self.train_epoch_size,
+                "train_loss_ctc_epoch": self.train_loss_ctc/self.train_epoch_size,
+                "train_loss_att_epoch": self.train_loss_att/self.train_epoch_size,
+                "train_decoder_acc_epoch": self.train_acc/self.train_epoch_size,
+                "epoch": self.current_epoch
+            }
+            self.log_dict(log_dict, logger=True)
+            print_stats(log_dict)
+
+        return super().on_train_epoch_end()
+
+    def on_validation_epoch_start(self):
+        self.num_val_loaders = len(self.trainer.val_dataloaders) # V
+        self.val_loss = torch.zeros(self.num_val_loaders).to(self.device) # (V, )
+        self.val_loss_ctc = torch.zeros(self.num_val_loaders).to(self.device) # (V, )
+        self.val_loss_att = torch.zeros(self.num_val_loaders).to(self.device) # (V, )
+        self.val_acc = torch.zeros(self.num_val_loaders).to(self.device) # (V, )
+        self.val_epoch_size = torch.zeros(self.num_val_loaders).to(self.device) # (V, )
+        return super().on_validation_epoch_start()
+
+    def on_validation_epoch_end(self) -> None:
+        # Gathering the values across GPUs
+        # sizes = (W, V)
+        self.val_loss = self.all_gather(self.val_loss, sync_grads=False).sum(dim=0) # (V, )
+        self.val_loss_ctc = self.all_gather(self.val_loss_ctc, sync_grads=False).sum(dim=0) # (V, )
+        self.val_loss_att = self.all_gather(self.val_loss_att, sync_grads=False).sum(dim=0) # (V, )
+        self.val_acc = self.all_gather(self.val_acc, sync_grads=False).sum(dim=0) # (V, )
+        self.val_epoch_size = self.all_gather(self.val_epoch_size, sync_grads=False).sum(dim=0) # (V, )
+
+        # Logging from process with global rank = 0
+        if self.global_rank == 0:
+            for idx in range(self.num_val_loaders):
+                if idx == 0:
+                    val_type = "test"
+                else:
+                    val_type = f"val{idx}"
+                log_dict = {
+                    f"{val_type}_loss_epoch": self.val_loss[idx]/self.val_epoch_size[idx],
+                    f"{val_type}_loss_ctc_epoch": self.val_loss_ctc[idx]/self.val_epoch_size[idx],
+                    f"{val_type}_loss_att_epoch": self.val_loss_att[idx]/self.val_epoch_size[idx],
+                    f"{val_type}_decoder_acc_epoch": self.val_acc[idx]/self.val_epoch_size[idx],
+                    f"epoch": self.current_epoch
+                }
+                self.log_dict(log_dict, logger=True)
+                print_stats(log_dict)
+
+        return super().on_train_epoch_end()
+
+    def on_test_epoch_start(self):
+        self.num_val_loaders = len(self.trainer.val_dataloaders)
+        self.total_length = [0 for i in range(self.num_val_loaders)]
+        self.total_edit_distance = [0 for i in range(self.num_val_loaders)]
+        self.result_data = [[] for i in range(self.num_val_loaders)]
+        
+        # For storing the metrics across GPUs and dataloaders
+        # each individual [] will store the metrics for that val loader
+        self.ids = [np.array([]) for i in range(self.num_val_loaders)]
+        self.word_dists = [np.array([]) for i in range(self.num_val_loaders)]
+        self.sent_lengths = [np.array([]) for i in range(self.num_val_loaders)]
+
+        if self.loggers:
+            results_dir = os.path.join(self.loggers[0].log_dir, f"results")
+            self.results_dir = results_dir
+            self.results_filepaths = ['' for idx in range(self.num_val_loaders)]
+
+            # Making the results.csv files to analyse the generated output text
+            os.makedirs(results_dir, exist_ok=True)
+            for i in range(self.num_val_loaders):
+                if i == 0:
+                    results_filename = f"test_results_epoch{self.current_epoch}.csv"
+                else:
+                    results_filename = f"val{i}_results_epoch{self.current_epoch}.csv"
+
+                results_fp = os.path.join(results_dir, results_filename)
+                self.results_filepaths[i] = results_fp
+
+                # Wrote the column names to the results csv file (only from global rank = 0)
+                if self.global_rank == 0:
+                    row_names = [
+                        "Index",
+                        "Ground Truth Text",
+                        "Predicted Text",
+                        "Length",
+                        "Word Distance",
+                        "WER",
+                        "Total Length",
+                        "Total Word Distance",
+                        "Final WER"
+                    ]
+                    with open(self.results_filepaths[i], mode='w') as file:
+                        writer = csv.writer(file, delimiter=',')
+                        writer.writerow(row_names)
+
+    def on_test_epoch_end(self) -> None:
+        # Loop over the results of all the different validation loaders
+        for idx in range(self.num_val_loaders):
+            # Only do logging from Global Rank = 0 process
+            if self.global_rank == 0:
+                wer = self.total_edit_distance[idx]/self.total_length[idx]
+                log_dict = {'epoch': self.current_epoch}
+                if idx == 0:
+                    log_dict['wer_test_epoch'] = wer
+                else:
+                    log_dict[f"wer_val{idx}_epoch"] = wer
+
+                if self.cfg.wandb:
+                    wandb.log(log_dict)
+                else:
+                    self.log_dict(log_dict, logger=True)
+                print_stats(log_dict)
+
+            # Write the csv results file for the corresponding val dataloader
+            if self.loggers and self.result_data[idx]:
+                with open(self.results_filepaths[idx], mode='a') as file:
+                    writer = csv.writer(file, delimiter=',')
+                    writer.writerows(self.result_data[idx])
+                    print(f"{self.current_epoch = } Successfully written the results data at {self.results_filepaths[idx]}")
+
+        return super().on_validation_epoch_end()
+
+def get_beam_search_decoder(model, token_list, rnnlm=None, rnnlm_conf=None, penalty=0, ctc_weight=0.1, lm_weight=0., beam_size=40):
+    if not rnnlm:
+        lm = None
+    else:
+        lm_args = get_model_conf(rnnlm, rnnlm_conf)
+        lm_model_module = getattr(lm_args, "model_module", "default")
+        lm_class = dynamic_import_lm(lm_model_module, lm_args.backend)
+        lm = lm_class(len(token_list), lm_args)
+        torch_load(rnnlm, lm)
+        lm.eval()
+
+    scorers = {
+        "decoder": model.decoder,
+        "ctc": CTCPrefixScorer(model.ctc, model.eos),
+        "length_bonus": LengthBonus(len(token_list)),
+        "lm": lm
+    }
+    scorers["lm"] = lm
+    scorers["length_bonus"] = LengthBonus(len(token_list))
+    weights = {
+        "decoder": 1.0 - ctc_weight,
+        "ctc": ctc_weight,
+        "lm": lm_weight,
+        "length_bonus": penalty,
+    }
+
+    print(weights)
+    return BatchBeamSearch(
+        beam_size=beam_size,
+        vocab_size=len(token_list),
+        weights=weights,
+        scorers=scorers,
+        sos=model.sos,
+        eos=model.eos,
+        token_list=token_list,
+        pre_beam_score_key=None if ctc_weight == 1.0 else "decoder",
+    )
