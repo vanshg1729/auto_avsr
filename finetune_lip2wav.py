@@ -22,11 +22,15 @@ def main(cfg):
     finetune_type = cfg.finetune
     print(f"{cfg.finetune = }")
     finetune_func = finetune_funcs[finetune_type]
+
     lr = cfg.optimizer.lr
     wd = cfg.optimizer.weight_decay
+    ds_args = cfg.data.dataset
+    window = ds_args.time_mask_window
+    stride = ds_args.time_mask_stride
 
     project_name = f"auto_avsr_{speaker}_finetune"
-    run_name = f"{speaker}_{finetune_type}_finetuning_step_lr{lr}_wd{wd}_grad0.5"
+    run_name = f"{speaker}_{finetune_type}_finetuning_const_lr{lr}_wd{wd}_win{window}_stride{stride}"
     # run_name = f"{speaker}_freeze_frontend3D_finetuning_default_lr1e-4"
     cfg.log_folder = os.path.join(cfg.logging_dir, f"{project_name}/{run_name}")
     cfg.exp_dir = cfg.log_folder

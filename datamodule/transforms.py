@@ -87,14 +87,18 @@ class AddNoise(torch.nn.Module):
 
 
 class VideoTransform:
-    def __init__(self, subset):
+    def __init__(self, subset, args=None):
+        window = 10 if args is None else args.time_mask_window 
+        stride = 25 if args is None else args.time_mask_stride
+        print(f"VideoTransform: window = {window} | stride = {stride}")
         if subset == "train":
             self.video_pipeline = torch.nn.Sequential(
                 torchvision.transforms.Grayscale(),
                 # FunctionalModule(lambda x: x.permute(1, 0, 2, 3)), # (C, T, H, W)
                 FunctionalModule(lambda x: x / 255.0),
                 torchvision.transforms.RandomCrop(88),
-                AdaptiveTimeMask(10, 25),
+                # AdaptiveTimeMask(10, 25), # original
+                AdaptiveTimeMask(window, stride),
                 torchvision.transforms.Normalize(0.421, 0.165),
             )
         elif subset == "val" or subset == "test":

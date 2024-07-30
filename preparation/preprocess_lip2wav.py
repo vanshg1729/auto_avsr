@@ -46,7 +46,7 @@ parser.add_argument(
 parser.add_argument(
     '--speaker',
     type=str,
-    default='dl',
+    default='eh',
     help='Name of speaker'
 )
 parser.add_argument(
@@ -56,15 +56,9 @@ parser.add_argument(
     help="Max duration (second) for each segment, (Default: 24)",
 )
 parser.add_argument(
-    "--groups",
-    type=int,
-    default=1,
-    help="Number of threads to be used in parallel.",
-)
-parser.add_argument(
     "--job-index",
     type=int,
-    default=0,
+    default=3,
     help="Index to identify separate jobs (useful for parallel processing).",
 )
 parser.add_argument(
@@ -81,7 +75,7 @@ text_transform = TextTransform()
 # Load Data
 args.data_dir = os.path.normpath(args.data_dir)
 gpu_id = args.job_index
-video_dataloader = AVSRDataLoader(modality="video", detector=args.detector, convert_gray=False, device=f"cuda:{gpu_id}") 
+video_dataloader = AVSRDataLoader(modality="video", detector=args.detector, convert_gray=False, device=f"cuda:0") 
 seg_vid_len = seg_duration * 25
 
 def process_text(text):
