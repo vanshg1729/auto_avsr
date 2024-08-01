@@ -3,6 +3,7 @@ import csv
 import numpy as np
 
 import torch
+from torch.optim.lr_scheduler import StepLR
 import torchaudio
 from pytorch_lightning import LightningModule
 
@@ -83,6 +84,8 @@ class ModelModule(LightningModule):
         optimizer = torch.optim.AdamW([{"name": "model", "params": self.model.parameters(), "lr": self.cfg.optimizer.lr}], weight_decay=self.cfg.optimizer.weight_decay, betas=(0.9, 0.98))
         # scheduler = WarmupCosineScheduler(optimizer, self.cfg.optimizer.warmup_epochs, self.cfg.trainer.max_epochs, len(self.trainer.datamodule.train_dataloader()))
         # scheduler = {"scheduler": scheduler, "interval": "step", "frequency": 1}
+        # scheduler = StepLR(optimizer, step_size=20, gamma=0.1)
+        # scheduler = {"scheduler": scheduler, "interval": "epoch", "frequency": 1}
         # return [optimizer], [scheduler]
         return [optimizer]
 
@@ -117,13 +120,30 @@ class ModelModule(LightningModule):
 
     def validation_step(self, batch, batch_idx, dataloader_idx=0):
         """
-            - batch: tensor of shape (B=1, T, C=1, H, W)
+            - batch: tensor of shape (T, C=1, H, W)
         """
         # Preparing the input for the model
         idx = dataloader_idx # idx is same as dataloader index
+        T = batch['input'].shape[0]
         inputs = batch['input'].transpose(0, 1).unsqueeze(0) # (B=1, C=1, T, H, W)
-        enc_feat, _ = self.model.encoder(inputs.to(self.device), None)
+        print(f"")
+        # inputs = inputs.to(self.device)
+        input_lengths = torch.tensor([T]).to(self.device)
+        targets = batch['target'].unsqueeze(0).unsqueeze(0)
+
+        # Getting Encoder features for CTC Beam search decoder
+        enc_feat, _ = self.model.encoder(inputs, None)
         enc_feat = enc_feat.squeeze(0) # (T, D)
+
+        # Model losses
+        # print(f"{inputs.shape = } | {input_lengths = } | {targets = }")
+        loss, loss_ctc, loss_att, acc = self.model(inputs, input_lengths, targets)
+        batch_size = 1
+        self.val_loss[idx] += loss.item() * batch_size
+        self.val_loss_ctc[idx] += loss_ctc.item() * batch_size
+        self.val_loss_att[idx] += loss_att.item() * batch_size
+        self.val_acc[idx] += acc * batch_size
+        self.val_epoch_size[idx] += batch_size
         # print(f"{batch_idx = } | {enc_feat.shape = }")
 
         # Getting the predicted output of the model using beam search
@@ -174,9 +194,9 @@ class ModelModule(LightningModule):
         # Logging only from Global Rank 0 process
         if self.global_rank == 0:
             if dataloader_idx == 0:
-                self.log("test_wer_iter", wer, on_step=True, logger=True, batch_size=1)
+                self.log("test_wer_iter", wer, on_step=True, on_epoch=False, logger=True, batch_size=1)
             else:
-                self.log(f"val{idx}_wer_iter", wer, on_step=True, batch_size=1)
+                self.log(f"val{idx}_wer_iter", wer, on_step=True, on_epoch=False, batch_size=1)
 
         # Printing Stats for this datapoint
         if self.cfg.verbose:
@@ -298,10 +318,10 @@ class ModelModule(LightningModule):
         # Logging from process with global rank = 0
         if self.global_rank == 0:
             log_dict = {
-                "loss_epoch": self.epoch_loss/self.epoch_size,
-                "loss_ctc_epoch": self.epoch_loss_ctc/self.epoch_size,
-                "loss_att_epoch": self.epoch_loss_att/self.epoch_size,
-                "decoder_acc_epoch": self.epoch_acc/self.epoch_size,
+                "train_loss_epoch": self.epoch_loss/self.epoch_size,
+                "train_loss_ctc_epoch": self.epoch_loss_ctc/self.epoch_size,
+                "train_loss_att_epoch": self.epoch_loss_att/self.epoch_size,
+                "train_decoder_acc_epoch": self.epoch_acc/self.epoch_size,
                 "epoch": self.current_epoch
             }
             self.log_dict(log_dict, logger=True)
@@ -317,11 +337,18 @@ class ModelModule(LightningModule):
                 if self.cfg.wandb and self.global_rank == 0:
                     wandb.log({'log_dir': self.log_dir})
 
-        self.num_val_loaders = len(self.trainer.val_dataloaders)
+        self.num_val_loaders = len(self.trainer.val_dataloaders) # V
         self.total_length = [0 for i in range(self.num_val_loaders)]
         self.total_edit_distance = [0 for i in range(self.num_val_loaders)]
         self.result_data = [[] for i in range(self.num_val_loaders)]
-        
+
+        # Validation loss and accuracies
+        self.val_loss = torch.zeros(self.num_val_loaders).to(self.device) # (V, )
+        self.val_loss_ctc = torch.zeros(self.num_val_loaders).to(self.device) # (V, )
+        self.val_loss_att = torch.zeros(self.num_val_loaders).to(self.device) # (V, )
+        self.val_acc = torch.zeros(self.num_val_loaders).to(self.device) # (V, )
+        self.val_epoch_size = torch.zeros(self.num_val_loaders).to(self.device) # (V, )
+
         # For storing the metrics across GPUs and dataloaders
         # each individual [] will store the metrics for that val loader
         self.ids = [np.array([]) for i in range(self.num_val_loaders)]
@@ -362,6 +389,31 @@ class ModelModule(LightningModule):
                         writer.writerow(row_names)
 
     def on_validation_epoch_end(self) -> None:
+        # Gathering the values across GPUs
+        # sizes = (W, V)
+        self.val_loss = self.all_gather(self.val_loss, sync_grads=False).sum(dim=0) # (V, )
+        self.val_loss_ctc = self.all_gather(self.val_loss_ctc, sync_grads=False).sum(dim=0) # (V, )
+        self.val_loss_att = self.all_gather(self.val_loss_att, sync_grads=False).sum(dim=0) # (V, )
+        self.val_acc = self.all_gather(self.val_acc, sync_grads=False).sum(dim=0) # (V, )
+        self.val_epoch_size = self.all_gather(self.val_epoch_size, sync_grads=False).sum(dim=0) # (V, )
+
+        # Logging from process with global rank = 0
+        if self.global_rank == 0:
+            for idx in range(self.num_val_loaders):
+                if idx == 0:
+                    val_type = "test"
+                else:
+                    val_type = f"val{idx}"
+                log_dict = {
+                    f"{val_type}_loss_epoch": self.val_loss[idx]/self.val_epoch_size[idx],
+                    f"{val_type}_loss_ctc_epoch": self.val_loss_ctc[idx]/self.val_epoch_size[idx],
+                    f"{val_type}_loss_att_epoch": self.val_loss_att[idx]/self.val_epoch_size[idx],
+                    f"{val_type}_decoder_acc_epoch": self.val_acc[idx]/self.val_epoch_size[idx],
+                    f"epoch": self.current_epoch
+                }
+                self.log_dict(log_dict, logger=True)
+                print_stats(log_dict)
+
         # Loop over the results of all the different validation loaders
         for idx in range(self.num_val_loaders):
             # Only do logging from Global Rank = 0 process

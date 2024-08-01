@@ -18,14 +18,23 @@ def main(cfg):
 
     print(f"Inside main() function")
     speaker = cfg.speaker
+    speaker = "benny"
     finetune_type = cfg.finetune
     print(f"{cfg.finetune = }")
     finetune_func = finetune_funcs[finetune_type]
+
+    # Parameters
     lr = cfg.optimizer.lr
     wd = cfg.optimizer.weight_decay
+    ds_args = cfg.data.dataset
+    window = ds_args.time_mask_window
+    stride = ds_args.time_mask_stride
+    dropout = cfg.model.visual_backbone.dropout_rate
 
+    # Project Name and Folders
     project_name = "auto_avsr_benny_deaf_finetuning"
-    run_name = f"{speaker}_{finetune_type}_finetuning_const_lr{lr}_wd{wd}"
+    # run_name = f"{speaker}_{finetune_type}_finetuning_const_lr{lr}_wd{wd}"
+    run_name = f"{speaker}_{finetune_type}_finetuning_const_lr{lr}_wd{wd}_win{window}_stride{stride}_drop{dropout}"
     # run_name = f"{speaker}_freeze_frontend3D_finetuning_default_lr1e-4"
     cfg.log_folder = os.path.join(cfg.logging_dir, f"{project_name}/{run_name}")
     cfg.exp_dir = cfg.log_folder
@@ -82,8 +91,8 @@ def main(cfg):
     print(f"{trainer.device_ids = }")
 
     # ckpt_path = '/ssd_scratch/cvit/vanshg/auto_avsr_benny_deaf_finetuning/benny_frontend_finetuning_const_lr0.001_wd0.03/lightning_logs/version_1/checkpoints/epoch=7-step=680.ckpt'
-    trainer.fit(model=modelmodule, datamodule=datamodule)
-    # trainer.validate(model=modelmodule, verbose=True, datamodule=datamodule)
+    # trainer.fit(model=modelmodule, datamodule=datamodule)
+    trainer.validate(model=modelmodule, verbose=True, datamodule=datamodule)
     # ensemble(cfg)
 
 if __name__ == "__main__":

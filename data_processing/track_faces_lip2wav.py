@@ -31,38 +31,44 @@ parser = argparse.ArgumentParser(description="Phrases Preprocessing")
 parser.add_argument(
     "--data-dir",
     type=str,
-    default='../datasets/Lip2Wav',
+    default='/ssd_scratch/cvit/vanshg/Lip2Wav/Dataset',
     help="Directory of original dataset",
 )
 parser.add_argument(
     "--detector",
     type=str,
-    default="yolov5",
-    choices=['retinaface', 'yolov5', 'face_alignment'],
+    default="retinaface",
+    choices=['retinaface', 'yolov5'],
     help="Type of face detector. (Default: face_alignment)",
 )
 parser.add_argument(
     "--root-dir",
     type=str,
-    default='../datasets/Lip2Wav',
+    default='/ssd_scratch/cvit/vanshg/Lip2Wav/Dataset',
     help="Root directory of preprocessed dataset",
 )
 parser.add_argument(
     '--speaker',
     type=str,
-    default='chem',
+    default='eh',
     help='Name of speaker'
 )
 parser.add_argument(
     '--ngpu',
     help='Number of GPUs across which to run in parallel',
-    default=1,
+    default=4,
     type=int
+)
+parser.add_argument(
+    "--job-index",
+    type=int,
+    default=0,
+    help="Index to identify separate jobs (useful for parallel processing).",
 )
 parser.add_argument(
     '--batch-size',
     help='Single GPU Face Detection batch size',
-    default=2,
+    default=32,
     type=int
 )
 
@@ -71,33 +77,27 @@ print(f"Detecting faces using : {args.detector}")
 
 src_speaker_dir = os.path.join(args.data_dir, args.speaker)
 src_vid_dir = os.path.join(src_speaker_dir, "videos")
-dst_vid_dir = os.path.join(src_speaker_dir, "face_tracks_test")
+dst_vid_dir = os.path.join(src_speaker_dir, "face_tracks")
 print(f"Src video dir = {src_vid_dir}")
 print(f"DST vid dir = {dst_vid_dir}")
-
-video_files = glob.glob(os.path.join(src_vid_dir, "*.mp4"))
-video_files = sorted(video_files)
-print(f"Total number of Video Files: {len(video_files)}")
-print(f"{video_files[0] = }")
 
 if args.detector == 'retinaface':
     from ibug.face_alignment import FANPredictor
     from ibug.face_detection import RetinaFacePredictor
     model_name = "resnet50"
-    face_detectors = [RetinaFacePredictor(device=f"cuda:{i}", threshold=0.8,
+    face_detector = RetinaFacePredictor(device=f"cuda:0", threshold=0.8,
                                         model=RetinaFacePredictor.get_model(model_name))
-                                        for i in range(args.ngpu)]
 elif args.detector == 'yolov5':
     sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
     from preparation.detectors.yoloface.face_detector import YoloDetector
-    face_detectors = [YoloDetector(device=f"cuda:{i}", min_face=25)
-                      for i in range(args.ngpu)]
-elif args.detector == 'face_alignment':
-    # Face Alignment Detector
-    import face_detection
-    from face_detection import FaceAlignment
-    face_detectors = [FaceAlignment(face_detection.LandmarksType._2D, flip_input=False,
-                                    device=f"cuda:{i}") for i in range(args.ngpu)]
+    face_detector = YoloDetector(device=f"cuda:0", min_face=25)
+
+# elif args.detector == 'face_alignment':
+#     # Face Alignment Detector
+#     import face_detection
+#     from face_detection import FaceAlignment
+#     face_detectors = [FaceAlignment(face_detection.LandmarksType._2D, flip_input=False,
+#                                     device=f"cuda:{i}") for i in range(args.ngpu)]
 else:
      raise ValueError(f"'{args.detector = }' Detector is not a valid choice for face detector")
 
@@ -138,7 +138,7 @@ def crop_frame(frame, speaker):
 
 def process_video_file(video_path, args, gpu_id=0, video_id=0):
     print(f"Processing video: {video_path}")
-    face_detector = face_detectors[gpu_id]
+    # face_detector = face_detectors[gpu_id]
     
     # Getting the output clips directory for this video
     video_fname = os.path.basename(video_path).split('.')[0]
@@ -215,12 +215,14 @@ def main(args):
     print(f"Total number of Video Files: {len(video_files)}")
     print(f"{video_files[0] = }")
 
-    jobs = [(video_path, args, i % args.ngpu, i) for i, video_path in enumerate(video_files)]
-    p = ThreadPoolExecutor(args.ngpu)
-    futures = [p.submit(mp_handler, j) for j in jobs]
-    _ = [r.result() for r in tqdm(as_completed(futures), total=len(futures))]
+    unit = math.ceil(len(video_files) * 1.0 / args.ngpu)
+    video_files = video_files[args.job_index * unit : (args.job_index + 1) * unit]
+    print(f"Number of files for this job index: {len(video_files)}")
 
-    print(f"WROTE FACE_TRACKS OF ALL VIDEOS OF SPEAKER {args.speaker} !!!")
+    for i, video_path in enumerate(tqdm(video_files, desc=f"Processing Video")):
+        process_video_file(video_path, args, video_id=i)
+    
+    print(f"WROTE FACE_TRACKS ALL VIDEOS in job {args.job_index} OF SPEAKER {args.speaker}!!!")
 
 if __name__ == '__main__':
     main(args)
