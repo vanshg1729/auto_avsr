@@ -26,7 +26,7 @@ def clean_caption_line(line):
     # Remove timestamps (e.g., 00:00:01.000)
     line = re.sub(r'\d{2}:\d{2}:\d{2}\.\d{3}', '', line)
     # Remove speaker labels (e.g., SPEAKER: or SPEAKER -)
-    line = re.sub(r'^[A-Z]+(\s|-):\s?', '', line)
+    line = re.sub(r'^[A-Z]+(\s|-)?:\s?', '', line)
     # Replace HTML entity for 'q&a' with 'qna'
     line = re.sub(r'&', 'n', line)
     # To handle cases like Deaf/HoH or August/September
