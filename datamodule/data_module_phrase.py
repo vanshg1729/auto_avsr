@@ -38,7 +38,11 @@ def pad(samples, pad_val=0.0):
 
 def collate_pad(batch):
     batch_out = {}
-    for data_type in batch[0].keys():
+    if isinstance(batch, list):
+        batch_keys = batch[0].keys()
+    else:
+        batch_keys = batch.keys()
+    for data_type in batch_keys:
         if data_type == 'idx':
             batch_out['ids'] = torch.tensor(
                 [s[data_type] for s in batch]
@@ -79,7 +83,7 @@ class DataModulePhrase(LightningDataModule):
         train_ds = PhraseDataset(
             root_dir=ds_args.root_dir,
             label_path=ds_args.train_file,
-            video_transform=VideoTransform("train"),
+            video_transform=VideoTransform("train", ds_args),
             subset="train",
         )
         return self._dataloader(train_ds, collate_pad)
@@ -109,7 +113,8 @@ class DataModulePhrase(LightningDataModule):
             ds,
             batch_size=None,
             shuffle=False,
-            num_workers=1,
+            num_workers=4,
+            # collate_fn=collate_fn,
             worker_init_fn=seed_worker,
             generator=g,
         )
@@ -123,7 +128,7 @@ class DataModulePhrase(LightningDataModule):
             dataset = PhraseDataset(
                 root_dir=ds_args.root_dir,
                 label_path=ds_args.test_file,
-                video_transform=VideoTransform("test"),
+                video_transform=VideoTransform("test", ds_args),
                 subset="test",
             )
             dataloader = self._val_dataloader(dataset, collate_pad)
@@ -133,7 +138,7 @@ class DataModulePhrase(LightningDataModule):
             dataset = PhraseDataset(
                 root_dir=ds_args.root_dir,
                 label_path=ds_args.val_file,
-                video_transform=VideoTransform("test"),
+                video_transform=VideoTransform("test", ds_args),
                 subset="test",
             )
             dataloader = self._val_dataloader(dataset, collate_pad)

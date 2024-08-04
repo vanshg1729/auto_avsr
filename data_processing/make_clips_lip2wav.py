@@ -42,12 +42,13 @@ parser.add_argument(
 parser.add_argument(
     '--speaker',
     type=str,
-    default='dl',
+    default='hs',
     help='Name of speaker'
 )
 
 args = parser.parse_args()
 
+min_clip_duration = 0.5
 src_speaker_dir = os.path.join(args.data_dir, args.speaker)
 src_vid_dir = os.path.join(src_speaker_dir, "videos")
 src_tracks_dir = os.path.join(src_speaker_dir, "face_tracks")
@@ -79,10 +80,25 @@ for video_idx, video_file in enumerate(tqdm(video_files, desc="Making Video Clip
 
     tracks_metadata = []
     total_clips = 0
+    clip_id = 0
     # Aligning the Face track to Sentence Segments and saving them
     for track_id, track in enumerate(tracks_list):
         # Get the clips for each of those tracks
-        track_clips = align_track_to_segments(track, aligned_segments)
+        track_clips = []
+        aligned_track_clips = align_track_to_segments(track, aligned_segments)
+
+        # Go through each of the segment clips aligned to the face track
+        for clip in aligned_track_clips:
+            clip_st = clip['start']
+            clip_end = clip['end']
+            clip_duration = clip_end - clip_st
+            # continue if clip is too small
+            if clip_duration < min_clip_duration:
+                continue
+            # store the clip
+            clip['clip_id'] = clip_id
+            track_clips.append(clip)
+            clip_id += 1
 
         # Save clips for each track
         track_metadata = save_track_clips(

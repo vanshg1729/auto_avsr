@@ -104,6 +104,72 @@ def save2vid_opencv(filename, vid, fps=25):
 
     out.release()
 
+def split_clip_by_words(clip, max_duration=16):
+    """
+    Splits a clip with word level segments present according to a max duration threshold 
+
+    Parameters:
+    - clip (dict): dictionary containing the keys {'start', 'end', 'sentence', 'words', 'seg_id'}
+    - max_duration (int): max duration in seconds for the clip
+    """
+    start_time = clip['start'] 
+    word_segs = clip['words']
+    seg_id = clip['seg_id']
+
+    sub_clips = []
+    current_start_time = start_time
+    current_end_time = start_time
+    current_words = []
+    current_word_segs = []
+    current_duration = 0
+    
+    for word_seg in word_segs:
+        word_start = word_seg.get('start', current_end_time)
+        word_end = word_seg.get('end', current_end_time)
+        word_text = word_seg['word']
+        # print(f"{word_text = } | {word_start = } | {word_end = } | {current_duration = }")
+        word_duration = word_end - word_start
+
+        # Start a new sub-clip
+        if word_end - current_start_time > max_duration:
+            # create a new sub-clip with the current words
+            current_sentence = ' '.join(current_words)
+            sub_clip = {
+                'sentence': current_sentence,
+                'start': current_start_time,
+                'end': current_end_time,
+                'words': current_word_segs,
+                'seg_id': seg_id
+            }
+            sub_clips.append(sub_clip)
+
+            # Start a new clip from this word onwards
+            current_start_time = word_start
+            current_end_time = word_end
+            current_words = [word_text]
+            current_word_segs = [word_seg]
+            current_duration = current_end_time - current_start_time
+        # Continue with the old sub-clip
+        else:
+            current_end_time = word_end
+            current_words.append(word_text)
+            current_word_segs.append(word_seg)
+            current_duration = current_end_time - current_start_time
+    
+    # Add the last sub-clip if there is any
+    if len(current_words):
+        current_sentence = ' '.join(current_words)
+        sub_clip = {
+            'sentence': current_sentence,
+            'start': current_start_time,
+            'end': current_end_time,
+            'words': current_word_segs,
+            'seg_id': seg_id
+        }
+        sub_clips.append(sub_clip)
+    
+    return sub_clips
+
 def is_segment_inside_track(face_start, face_end, sent_start, sent_end, tol=0.1):
     """
     Check if a sentence/word segment lies inside a face track segment with a tolerance.
@@ -121,7 +187,7 @@ def is_segment_inside_track(face_start, face_end, sent_start, sent_end, tol=0.1)
     # Check if the sentence start and end times are within the face track times with tolerance
     return (face_start - tol <= sent_start <= face_end + tol) and (face_start - tol <= sent_end <= face_end + tol)
 
-def align_track_to_segments(track, segments, min_clip_len=0.9, word_level=True, verbose=False):
+def align_track_to_segments(track, segments, min_clip_len=0.9, word_level=True, max_duration=16.5, verbose=False):
     """
     Gets the Sentence Segments that align with a face track
 
@@ -148,6 +214,7 @@ def align_track_to_segments(track, segments, min_clip_len=0.9, word_level=True, 
         seg_st = segment['start']
         seg_end = segment['end']
 
+        clip = {}
         # The entire sentence is covered in the face track
         if is_segment_inside_track(track_st, track_end, seg_st, seg_end):
 
@@ -160,7 +227,6 @@ def align_track_to_segments(track, segments, min_clip_len=0.9, word_level=True, 
 
             if word_level:
                 clip['words'] = segment['words']
-            clips.append(clip)
             if verbose:
                 print(f"ID: {seg_id} | Start: {seg_st} | End: {seg_end} | Sentence: {segment['text']}")
         # The start of the sentence overlaps with the face track
@@ -192,7 +258,6 @@ def align_track_to_segments(track, segments, min_clip_len=0.9, word_level=True, 
             sentence = ' '.join(words)
             clip = {'sentence': sentence, 'start': seg_st, 'end': seg_end,
                     'words': word_segs, 'seg_id': seg_id}
-            clips.append(clip)
             if verbose:
                 print(f"ID: {seg_id} | Start: {seg_st} | End: {seg_end} | Sentence: {sentence}")
         # The end of the sentence overlaps with the face track
@@ -229,10 +294,34 @@ def align_track_to_segments(track, segments, min_clip_len=0.9, word_level=True, 
             sentence = ' '.join(words)
             clip = {'sentence': sentence, 'start': seg_st, 'end': seg_end,
                     'words': word_segs, 'seg_id': seg_id}
-            clips.append(clip)
             if verbose:
                 print(f"ID: {seg_id} | Start: {seg_st} | End: {seg_end} | Sentence: {sentence}")
-    
+        
+        # If a clip exists, then add it to list of clips
+        if len(clip.keys()):
+            if not word_level:
+                clips.append(clip)
+                continue
+
+            clip_st = clip['start']
+            clip_end = clip['end']
+            clip_duration = clip_end - clip_st
+            # clip is less than max_duration
+            if clip_duration + tol < max_duration:
+                clips.append(clip)
+            # clip is too long
+            else:
+                # print(f"\nSplitting clip by words | duration: {clip_duration}")
+                sub_clips = split_clip_by_words(clip, max_duration=max_duration)
+                # print(f"{len(sub_clips) = }")
+                # for sub_clip in sub_clips:
+                #     clip_st = sub_clip['start']
+                #     clip_end = sub_clip['end']
+                #     seg_id = sub_clip['seg_id']
+                #     duration = clip_end - clip_st
+                #     print(f"{clip_st = } | {clip_end = } | {seg_id = } | {duration = }")
+                clips.extend(sub_clips)
+                
     return clips
 
 def save_track_clips(face_track, track_id, track_clips, input_vid_dir, output_clip_dir, roundoff=False, verbose=False):
@@ -263,18 +352,19 @@ def save_track_clips(face_track, track_id, track_clips, input_vid_dir, output_cl
         #     clip_st = round_down(clip_st)
         #     clip_end = round_up(clip_end)
         seg_id = clip['seg_id']
+        clip_id = clip['clip_id']
         sentence = clip['sentence']
 
         input_video_path = os.path.join(input_vid_dir, f"{video_fname}.mp4")
         video_clips_dir = os.path.join(output_clip_dir, f"{video_fname}")
         os.makedirs(video_clips_dir, exist_ok=True)
-        output_clip_path = os.path.join(video_clips_dir, f"{video_fname}_{track_id}_{seg_id}.mp4")
+        output_clip_path = os.path.join(video_clips_dir, f"{video_fname}_{track_id}_{seg_id}_{clip_id}.mp4")
 
         # Save the clip 
         clip_video_ffmpeg(input_video_path, (clip_st, clip_end), output_clip_path, verbose=verbose)
 
         # Save the transcript
-        output_txt_path = os.path.join(video_clips_dir, f"{video_fname}_{track_id}_{seg_id}.txt")
+        output_txt_path = os.path.join(video_clips_dir, f"{video_fname}_{track_id}_{seg_id}_{clip_id}.txt")
         with open(output_txt_path, 'w') as file:
             file.write(f"{output_clip_path} {sentence}")
 

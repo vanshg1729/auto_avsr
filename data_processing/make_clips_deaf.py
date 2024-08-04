@@ -42,7 +42,7 @@ parser.add_argument(
 parser.add_argument(
     '--speaker',
     type=str,
-    default='benny',
+    default='benny-large',
     help='Name of speaker'
 )
 

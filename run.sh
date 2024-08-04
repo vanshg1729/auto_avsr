@@ -32,10 +32,10 @@ python train_phrase.py exp_dir=/ssd_scratch/cvit/vanshg/vansh_phrases_exp \
 
 python finetune_deaf.py exp_dir=/ssd_scratch/cvit/vanshg/deaf_youtube_exp \
                data.modality=video \
-               data.dataset.root_dir=/ssd_scratch/cvit/vanshg/datasets/deaf-youtube/benny \
-               data.dataset.train_file=/ssd_scratch/cvit/vanshg/datasets/deaf-youtube/benny/train_labels.txt \
-               data.dataset.test_file=/ssd_scratch/cvit/vanshg/datasets/deaf-youtube/benny/test_labels.txt \
-               data.dataset.val_file=/ssd_scratch/cvit/vanshg/datasets/deaf-youtube/benny/val_labels.txt \
+               data.dataset.root_dir=/ssd_scratch/cvit/vanshg/datasets/deaf-youtube/ \
+               data.dataset.train_file=/ssd_scratch/cvit/vanshg/datasets/deaf-youtube/benny-large/train_labels.txt \
+               data.dataset.test_file=/ssd_scratch/cvit/vanshg/datasets/deaf-youtube/benny-large/test_labels.txt \
+               data.dataset.val_file=/ssd_scratch/cvit/vanshg/datasets/deaf-youtube/benny-large/val_labels.txt \
                pretrained_model_path=./checkpoints/lrs3/models/LRS3_V_WER19.1/model.pth
 
 python finetune_lip2wav.py data.modality=video \
@@ -45,15 +45,26 @@ python finetune_lip2wav.py data.modality=video \
                data.dataset.val_file=/ssd_scratch/cvit/vanshg/Lip2Wav/Dataset/eh/val_labels.txt \
                pretrained_model_path=./checkpoints/lrs3/models/LRS3_V_WER19.1/model.pth
 
-python inference.py data.modality=video \
+# For Mead Dataset
+python finetune_deaf.py data.modality=video \
                data.dataset.root_dir=/ssd_scratch/cvit/vanshg/Lip2Wav/Dataset \
-               data.dataset.test_file=/ssd_scratch/cvit/vanshg/Lip2Wav/Dataset/chem/test_labels.txt \
-               data.dataset.val_file=/ssd_scratch/cvit/vanshg/Lip2Wav/Dataset/chem/val_labels.txt \
+               data.dataset.train_file=/ssd_scratch/cvit/akshat/phrases_mead/w011/front_labels_train_random_80_e.txt \
+               data.dataset.test_file=/ssd_scratch/cvit/akshat/phrases_mead/w011/front_labels_test_random_80_e.txt \
                pretrained_model_path=./checkpoints/lrs3/models/LRS3_V_WER19.1/model.pth
 
 python inference.py data.modality=video \
-               data.dataset.root_dir=/ssd_scratch/cvit/vanshg/datasets/deaf-youtube/benny \
-               data.dataset.test_file=/ssd_scratch/cvit/vanshg/datasets/deaf-youtube/benny/train_labels.txt \
+               data.dataset.root_dir=/ssd_scratch/cvit/vanshg/ \
+               data.dataset.test_file=/ssd_scratch/cvit/akshat/phrases_mead/w011/front_labels_test_random_80_e.txt \
+               pretrained_model_path=./checkpoints/lrs3/models/LRS3_V_WER19.1/model.pth
+
+python inference.py data.modality=video \
+               data.dataset.root_dir=/ssd_scratch/cvit/vanshg/Lip2Wav/Dataset \
+               data.dataset.test_file=/ssd_scratch/cvit/vanshg/Lip2Wav/Dataset/chem/train_orig_labels.txt \
+               pretrained_model_path=./checkpoints/lrs3/models/LRS3_V_WER19.1/model.pth
+
+python inference.py data.modality=video \
+               data.dataset.root_dir=/ssd_scratch/cvit/vanshg/datasets/deaf-youtube/ \
+               data.dataset.test_file=/ssd_scratch/cvit/vanshg/datasets/deaf-youtube/benny-large/train_labels.txt \
                pretrained_model_path=./checkpoints/lrs3/models/LRS3_V_WER19.1/model.pth
 
 python finetune.py exp_dir=/ssd_scratch/cvit/vanshg/vansh_phrases_exp \

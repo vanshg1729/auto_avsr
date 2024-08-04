@@ -106,9 +106,14 @@ class PhraseDataset(torch.utils.data.Dataset):
 
     def __getitem__(self, idx):
         video_metadata = self.video_list[idx]
-        rel_path, gt_text = video_metadata.split()[0], " ".join(video_metadata.split()[1:])
+        vid_path, gt_text = video_metadata.split()[0], " ".join(video_metadata.split()[1:])
 
-        video_filepath = os.path.join(self.root_dir, rel_path)
+        # Path is absolute
+        if vid_path[0] == '/':
+            video_filepath = vid_path
+        # Path is relative
+        else:
+            video_filepath = os.path.join(self.root_dir, vid_path)
         token_id = self.text_transform.tokenize(gt_text.upper())
 
         video = load_video(video_filepath)

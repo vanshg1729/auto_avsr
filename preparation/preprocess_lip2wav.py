@@ -46,8 +46,14 @@ parser.add_argument(
 parser.add_argument(
     '--speaker',
     type=str,
-    default='eh',
+    default='hs',
     help='Name of speaker'
+)
+parser.add_argument(
+    "--combine-av",
+    type=lambda x: (str(x).lower() == "true"),
+    default=True,
+    help="Merges the audio and video components to a media file.",
 )
 parser.add_argument(
     "--seg-duration",
@@ -58,7 +64,7 @@ parser.add_argument(
 parser.add_argument(
     "--job-index",
     type=int,
-    default=3,
+    default=0,
     help="Index to identify separate jobs (useful for parallel processing).",
 )
 parser.add_argument(
@@ -75,12 +81,15 @@ text_transform = TextTransform()
 # Load Data
 args.data_dir = os.path.normpath(args.data_dir)
 gpu_id = args.job_index
-video_dataloader = AVSRDataLoader(modality="video", detector=args.detector, convert_gray=False, device=f"cuda:0") 
+video_dataloader = AVSRDataLoader(modality="video", detector=args.detector, 
+                                  convert_gray=False, device=f"cuda:{gpu_id}") 
+audio_dataloader = AVSRDataLoader(modality='audio')
 seg_vid_len = seg_duration * 25
 
 def process_text(text):
     punctuation = string.punctuation.replace("'", "")
     text = text.translate(str.maketrans('', '', punctuation))
+    text = ' '.join(text.split()) # Removing extra whitespaces
     text = text.upper()
     return text
 
@@ -98,6 +107,7 @@ src_vid_dir = os.path.join(src_speaker_dir, f"sentence_clips")
 
 dst_speaker_dir = os.path.join(args.root_dir, f"{args.speaker}")
 dst_vid_dir = os.path.join(dst_speaker_dir, f"processed_videos")
+dst_aud_dir = os.path.join(dst_speaker_dir, f"processed_audio")
 dst_txt_dir = os.path.join(dst_speaker_dir, f"transcriptions")
 
 print(f"Src video dir = {src_vid_dir}")
@@ -118,34 +128,50 @@ def preprocess_video_file(video_path, args, video_id=0):
     data_filename = os.path.join(vid_clips_dir, f"{video_fname}.mp4")
     try:
         video_data = video_dataloader.load_data(data_filename, None)
+        audio_data = audio_dataloader.load_data(data_filename)
         # print(f"shape of video_data = {video_data.shape}")
     except (UnboundLocalError, TypeError, OverflowError, AssertionError):
         return
 
-    dst_vid_filename = os.path.join(dst_vid_dir, f"{video_fname}.mp4")
-    dst_txt_filename = os.path.join(dst_txt_dir, f"{video_fname}.txt")
-
-    fname = video_fname.split('.')[0]
     src_txt_filename = os.path.join(vid_clips_dir, f"{video_fname}.txt")
     gt_text = get_gt_text(src_txt_filename)
+    print(f"{gt_text = }")
+
+    dst_vid_filename = os.path.join(dst_vid_dir, f"{video_fname}.mp4")
+    dst_txt_filename = os.path.join(dst_txt_dir, f"{video_fname}.txt")
+    dst_aud_filename = os.path.join(dst_aud_dir, f"{video_fname}.wav")
+
     save_vid_aud_txt(
         dst_vid_filename,
-        None,
+        dst_aud_filename,
         dst_txt_filename,
         video_data,
-        None,
-        gt_text
+        audio_data,
+        gt_text,
+        video_fps=25,
+        audio_sample_rate=16000,
     )
 
-    # Getting the token string
-    # token_id_str = " ".join(
-    #     map(str, [_.item() for _ in text_transform.tokenize(gt_text)])
-    # )
-    rel_dir = os.path.join("chem", "processed_videos")
-    basename = os.path.basename(dst_vid_filename)
-    rel_vid_path = os.path.join(rel_dir, basename)
+    if args.combine_av:
+        in1 = ffmpeg.input(dst_vid_filename)
+        in2 = ffmpeg.input(dst_aud_filename)
+        out = ffmpeg.output(
+            in1["v"],
+            in2["a"],
+            dst_vid_filename[:-4] + ".av.mp4",
+            vcodec="copy",
+            acodec="aac",
+            strict="experimental",
+            loglevel="panic",
+        )
+        out.run()
+        shutil.move(dst_vid_filename[:-4] + ".av.mp4", dst_vid_filename)
 
-    print(f"{rel_vid_path} {gt_text}")
+    # Relative path starting from the root of the dataset
+    basename = os.path.relpath(dst_vid_filename, 
+                               start=args.data_dir)
+
+    print(f"{basename} {gt_text}")
     print(f"saved the data for {video_fname} to {dst_vid_filename}")
 
 def main(args):
@@ -155,7 +181,7 @@ def main(args):
 
     unit = math.ceil(len(vid_filenames) * 1.0 / args.ngpu)
     vid_filenames = vid_filenames[args.job_index * unit : (args.job_index + 1) * unit]
-    print(len(vid_filenames))
+    print(f"{len(vid_filenames) = }")
     print(vid_filenames[0])
 
     for i, video_path in enumerate(tqdm(vid_filenames, desc=f"Processing Video")):

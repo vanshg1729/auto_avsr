@@ -19,26 +19,19 @@ parser = argparse.ArgumentParser(description="Phrases Preprocessing")
 parser.add_argument(
     "--data-dir",
     type=str,
-    default='../datasets/deaf-youtube',
+    default='/ssd_scratch/cvit/vanshg/datasets/deaf-youtube',
     help="Directory of original dataset",
-)
-parser.add_argument(
-    "--detector",
-    type=str,
-    default="face_alignment",
-    choices=['retinaface', 'yolov5', 'face_alignment'],
-    help="Type of face detector. (Default: face_alignment)",
 )
 parser.add_argument(
     "--root-dir",
     type=str,
-    default='../datasets/deaf-youtube',
+    default='/ssd_scratch/cvit/vanshg/datasets/deaf-youtube',
     help="Root directory of preprocessed dataset",
 )
 parser.add_argument(
     '--speaker',
     type=str,
-    default='benny',
+    default='benny-large',
     help='Name of speaker'
 )
 

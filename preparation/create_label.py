@@ -15,7 +15,7 @@ from transforms import TextTransform
 from utils import save_vid_aud_txt, split_file
 
 data_dir = "/ssd_scratch/cvit/vanshg/Lip2Wav/Dataset"
-speaker_name = "dl"
+speaker_name = "chem"
 
 src_speaker_dir = os.path.join(data_dir, f"{speaker_name}")
 src_video_dir = os.path.join(src_speaker_dir, "processed_videos")
@@ -33,7 +33,7 @@ def process_text(text):
 
 def get_gt_text(file_path):
     src_txt_filename = file_path
-    with open(src_txt_filename, "r") as file:
+    with open(src_txt_filename, "r", encoding='utf-8') as file:
         text = file.read()
     
     return text
@@ -44,7 +44,7 @@ print(f"{len(video_files) = }")
 print(f"{video_files[0] = }")
 
 # Label file for speaker
-dst_label_file = os.path.join(src_speaker_dir, "labels.txt")
+dst_label_file = os.path.join(src_speaker_dir, "all_labels.txt")
 f = open(dst_label_file, "w")
 print(f"DST Label File: {dst_label_file}")
 
@@ -61,11 +61,11 @@ for video_idx, video_file in enumerate(tqdm(video_files, desc="Creating Labels f
 
     if total_frames > 500 or total_frames <= 0:
         print(f"File {video_idx = } {video_file} with has {total_frames = }")
-        continue
+        # continue
 
     if gt_len == 0:
         print(f"File {video_idx = } {video_file} HAS 0 GT LEN")
-        continue
+        # continue
 
     basename = os.path.relpath(video_file, start=data_dir)
     f.write(

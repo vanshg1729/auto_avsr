@@ -8,6 +8,7 @@ import pickle
 import shutil
 import warnings
 import sys
+import copy
 
 import ffmpeg
 from data.data_module import AVSRDataLoader
@@ -46,7 +47,7 @@ parser.add_argument(
 parser.add_argument(
     '--speaker',
     type=str,
-    default='benny',
+    default='benny-large',
     help='Name of speaker'
 )
 parser.add_argument(
@@ -70,13 +71,13 @@ parser.add_argument(
 parser.add_argument(
     "--job-index",
     type=int,
-    default=0,
+    default=3,
     help="Index to identify separate jobs (useful for parallel processing).",
 )
 parser.add_argument(
     '--ngpu',
     type=int,
-    default=1,
+    default=4,
     help='Number of GPUs to use in Parallel'
 )
 args = parser.parse_args()
@@ -116,8 +117,9 @@ def process_text(text):
     return text
 
 def get_gt_text(file_path):
+    print(f"get_gt_text(): {file_path = }")
     src_txt_filename = file_path
-    with open(src_txt_filename, "r") as file:
+    with open(src_txt_filename, "r", encoding='utf-8') as file:
         text = ' '.join(file.read().split(' ')[1:])
         text = process_text(text)
     
@@ -139,6 +141,7 @@ def preprocess_video_file(video_path, args, video_id=0):
 
     src_txt_filename = os.path.join(vid_clips_dir, f"{video_fname}.txt")
     gt_text = get_gt_text(src_txt_filename)
+    print(f"{gt_text = }")
 
     dst_vid_filename = os.path.join(dst_vid_dir, f"{video_fname}.mp4")
     dst_txt_filename = os.path.join(dst_txt_dir, f"{video_fname}.txt")
@@ -184,6 +187,7 @@ def main(args):
 
     unit = math.ceil(len(vid_filenames) * 1.0 / args.ngpu)
     vid_filenames = vid_filenames[args.job_index * unit : (args.job_index + 1) * unit]
+    # vid_filenames = [os.path.join(src_vid_dir, "obJ9XklnwSo/obJ9XklnwSo_49_161.mp4")]
     print(len(vid_filenames))
     print(vid_filenames[0])
 

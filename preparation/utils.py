@@ -91,7 +91,7 @@ def save_vid_aud_txt(
         save2aud(dst_aud_filename, trim_aud_data, audio_sample_rate)
     # -- save text
     os.makedirs(os.path.dirname(dst_txt_filename), exist_ok=True)
-    f = open(dst_txt_filename, "w")
+    f = open(dst_txt_filename, "w", encoding='utf-8')
     f.write(f"{content}")
     f.close()
 

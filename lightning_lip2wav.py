@@ -17,6 +17,8 @@ from espnet.nets.pytorch_backend.e2e_asr_transformer import E2E
 from espnet.nets.lm_interface import dynamic_import_lm
 from espnet.nets.scorers.ctc import CTCPrefixScorer
 from espnet.nets.scorers.length_bonus import LengthBonus
+
+from utils.norm_utils import get_weight_norms, get_grad_norms
 import wandb
 
 def get_lr(opt):
@@ -280,6 +282,28 @@ class ModelModule(LightningModule):
 
         torch.cuda.empty_cache()
         return loss
+
+    def on_train_batch_start(self, batch, batch_idx):
+        weight_norms_dict = get_weight_norms(self.model)
+        if self.global_rank == 0:
+            if self.cfg.wandb:
+                wandb.log(weight_norms_dict)
+            # self.log_dict(weight_norms_dict, on_step=True, on_epoch=False,
+            #               logger=True)
+        
+        return super().on_train_batch_start(batch, batch_idx)
+
+    def on_train_batch_end(self, out, batch, batch_idx):
+        grad_norms_dict = get_grad_norms(self.model)
+        if self.global_rank == 0:
+            if self.cfg.wandb:
+                wandb.log(grad_norms_dict)
+            
+            # TODO : This only logs at intervals of 50 for some reason (figure it out)
+            # self.log_dict(grad_norms_dict, on_step=True, on_epoch=False,
+            #               logger=True)
+        
+        return super().on_train_batch_end(out, batch, batch_idx)
 
     def on_train_epoch_start(self):
         if self.log_dir is None:

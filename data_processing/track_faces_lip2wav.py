@@ -37,7 +37,7 @@ parser.add_argument(
 parser.add_argument(
     "--detector",
     type=str,
-    default="retinaface",
+    default="yolov5",
     choices=['retinaface', 'yolov5'],
     help="Type of face detector. (Default: face_alignment)",
 )
@@ -50,7 +50,7 @@ parser.add_argument(
 parser.add_argument(
     '--speaker',
     type=str,
-    default='eh',
+    default='chem',
     help='Name of speaker'
 )
 parser.add_argument(
@@ -68,7 +68,7 @@ parser.add_argument(
 parser.add_argument(
     '--batch-size',
     help='Single GPU Face Detection batch size',
-    default=32,
+    default=64,
     type=int
 )
 
@@ -81,16 +81,17 @@ dst_vid_dir = os.path.join(src_speaker_dir, "face_tracks")
 print(f"Src video dir = {src_vid_dir}")
 print(f"DST vid dir = {dst_vid_dir}")
 
+gpu_id = args.job_index
 if args.detector == 'retinaface':
     from ibug.face_alignment import FANPredictor
     from ibug.face_detection import RetinaFacePredictor
     model_name = "resnet50"
-    face_detector = RetinaFacePredictor(device=f"cuda:0", threshold=0.8,
+    face_detector = RetinaFacePredictor(device=f"cuda:{gpu_id}", threshold=0.8,
                                         model=RetinaFacePredictor.get_model(model_name))
 elif args.detector == 'yolov5':
     sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
     from preparation.detectors.yoloface.face_detector import YoloDetector
-    face_detector = YoloDetector(device=f"cuda:0", min_face=25)
+    face_detector = YoloDetector(device=f"cuda:{gpu_id}", min_face=25)
 
 # elif args.detector == 'face_alignment':
 #     # Face Alignment Detector
