@@ -18,10 +18,10 @@ def main(cfg):
 
     print(f"Inside main() function")
 
-    speaker = "chem"
+    speaker = "eh"
     project_name = f"{speaker}_inference"
-    run_name = "chem_encoder_finetuning_const_lr0.0001_wd0.5_win20_stride25"
-    # run_name = f"train_pretrained"
+    # run_name = "chem_encoder_finetuning_const_lr0.0001_wd0.5_win20_stride25"
+    run_name = f"pretrained_on_train_set"
     cfg.log_folder = os.path.join(cfg.logging_dir, f"{project_name}/{run_name}")
     cfg.exp_dir = cfg.log_folder
     cfg.trainer.default_root_dir = cfg.log_folder
@@ -58,8 +58,8 @@ def main(cfg):
     print(f"{trainer.device_ids = }")
 
     # ckpt_path = "/ssd_scratch/cvit/vanshg/auto_avsr_eh_finetune/eh_encoder_finetuning_step_lr0.0001_wd0.5_win20_stride25_drop0.1/lightning_logs/version_0/checkpoints/epoch=7-step=5136.ckpt"
-    ckpt_path = "/ssd_scratch/cvit/vanshg/epoch=5-step=9696.ckpt"
-    trainer.validate(model=modelmodule, verbose=True, datamodule=datamodule, ckpt_path=ckpt_path)
+    # ckpt_path = "/ssd_scratch/cvit/vanshg/epoch=5-step=9696.ckpt"
+    trainer.validate(model=modelmodule, verbose=True, datamodule=datamodule)
 
 if __name__ == "__main__":
     main()

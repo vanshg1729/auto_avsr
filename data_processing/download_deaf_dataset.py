@@ -5,7 +5,7 @@ import os
 from tqdm import tqdm
 
 data_dir = "/ssd_scratch/cvit/vanshg/datasets/deaf-youtube"
-speaker_name = "benny-large"
+speaker_name = "realdeafdreamer"
 
 def download_video(video_id, download_dir):
    # Ensure the download path exists
@@ -71,7 +71,7 @@ def download_caption(video_id, download_dir, language_code='en'):
 
 if __name__ == "__main__":
     speaker_dir = os.path.join(data_dir, f"{speaker_name}")
-    video_ids_file = os.path.join(speaker_dir, f"new_videos.txt") # Path to text file with video ids
+    video_ids_file = os.path.join(speaker_dir, f"temp_video_ids.txt") # Path to text file with video ids
     dst_vid_dir = os.path.join(speaker_dir, f"videos") # Path where videos will be downloaded
     dst_caption_dir = os.path.join(speaker_dir, f"captions")
 
@@ -87,4 +87,4 @@ if __name__ == "__main__":
         # if i > 0:
         #     break
         download_video(video_id, dst_vid_dir)
-        download_caption(video_id, dst_caption_dir)
+        # download_caption(video_id, dst_caption_dir)

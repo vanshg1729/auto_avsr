@@ -31,7 +31,7 @@ parser.add_argument(
 parser.add_argument(
     '--speaker',
     type=str,
-    default='benny-large',
+    default='realdeafdreamer',
     help='Name of speaker'
 )
 

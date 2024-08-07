@@ -15,9 +15,11 @@ def seconds_to_hhmmss(seconds):
     Returns:
         str: Time in hh:mm:ss format.
     """
+    seconds = math.ceil(seconds * 1e3)/1e3 # Rounding to the nearest decimal of 1e-3
     hours = int(seconds // 3600)
     minutes = int((seconds % 3600) // 60)
     secs = seconds % 60
+    # print(f"{seconds = } | {hours = } | {minutes = } | {secs = }")
     return f"{hours:02}:{minutes:02}:{secs:06.3f}"
 
 def clip_video_ffmpeg(video_path, timestamsp, output_path, verbose=False):
@@ -187,7 +189,7 @@ def is_segment_inside_track(face_start, face_end, sent_start, sent_end, tol=0.1)
     # Check if the sentence start and end times are within the face track times with tolerance
     return (face_start - tol <= sent_start <= face_end + tol) and (face_start - tol <= sent_end <= face_end + tol)
 
-def align_track_to_segments(track, segments, min_clip_len=0.9, word_level=True, max_duration=16.5, verbose=False):
+def align_track_to_segments(track, segments, min_clip_len=0.9, word_level=False, max_duration=16.5, verbose=False):
     """
     Gets the Sentence Segments that align with a face track
 

@@ -85,7 +85,7 @@ for video_idx, video_file in enumerate(tqdm(video_files, desc="Making Video Clip
     for track_id, track in enumerate(tracks_list):
         # Get the clips for each of those tracks
         track_clips = []
-        aligned_track_clips = align_track_to_segments(track, aligned_segments)
+        aligned_track_clips = align_track_to_segments(track, aligned_segments, word_level=True)
 
         # Go through each of the segment clips aligned to the face track
         for clip in aligned_track_clips:

@@ -14,7 +14,7 @@ import copy
 from datamodule.av_dataset import cut_or_pad
 from datamodule.transforms import AudioTransform, VideoTransform
 
-device = 'cuda' if torch.cuda.is_available() else 'cpu'
+device = 'cuda:1' if torch.cuda.is_available() else 'cpu'
 
 def save2vid_opencv(filename, vid, fps=25):
     # os.makedirs(os.path.dirname(filename), exist_ok=True)
@@ -51,7 +51,7 @@ class InferencePipeline(torch.nn.Module):
             elif detector == "retinaface":
                 from preparation.detectors.retinaface.detector import LandmarksDetector
                 from preparation.detectors.retinaface.video_process import VideoProcess
-                self.landmarks_detector = LandmarksDetector(device="cuda:0")
+                self.landmarks_detector = LandmarksDetector(device=device)
                 self.video_process = VideoProcess(convert_gray=False)
             self.video_transform = VideoTransform(subset="test")
 
@@ -181,18 +181,18 @@ def infer_wildvsr(cfg):
 def infer_phrases(cfg):
     pipeline = InferencePipeline(cfg)
     print(f"Got the inference pipeline")
-    phrases_dir = "/ssd_scratch/cvit/vanshg/lip2wav_dataset"
+    phrases_dir = "/ssd_scratch/cvit/vanshg/datasets/deaf-youtube/benny"
     assert os.path.exists(phrases_dir), f"Phrases dir: '{phrases_dir}' doesn't exists"
     print(f"Phrases DIR: {phrases_dir}")
 
-    label_file = "/ssd_scratch/cvit/vanshg/lip2wav_dataset/chem_lectures/labels.txt"
+    label_file = "/ssd_scratch/cvit/vanshg/datasets/deaf-youtube/benny/label_files/XlEO7pWAc84.txt"
     print(f"Label file: {label_file}")
     lines = open(label_file).read().splitlines()
     f = open(label_file, 'r')
     print(f"Total number of videos: {len(lines)}")
 
     label_dir = os.path.dirname(label_file)
-    csv_filepath = os.path.join(label_dir, "chem_lectures_19.1_auto_avsr.csv")
+    csv_filepath = os.path.join(label_dir, "XlEO7pWAc84_19.1_auto_avsr.csv")
     csv_fp = open(csv_filepath, "w", newline='')
     writer = csv.writer(csv_fp, delimiter=',')
     row_names = [

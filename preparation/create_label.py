@@ -14,8 +14,8 @@ from tqdm import tqdm
 from transforms import TextTransform
 from utils import save_vid_aud_txt, split_file
 
-data_dir = "/ssd_scratch/cvit/vanshg/Lip2Wav/Dataset"
-speaker_name = "chem"
+data_dir = "/ssd_scratch/cvit/vanshg/datasets/deaf-youtube/"
+speaker_name = "realdeafdreamer"
 
 src_speaker_dir = os.path.join(data_dir, f"{speaker_name}")
 src_video_dir = os.path.join(src_speaker_dir, "processed_videos")
@@ -39,6 +39,7 @@ def get_gt_text(file_path):
     return text
 
 video_files = glob.glob(os.path.join(src_video_dir, "*.mp4"))
+# video_files = glob.glob(os.path.join(src_speaker_dir, "sentence_clips/*/*.mp4"))
 video_files = sorted(video_files)
 print(f"{len(video_files) = }")
 print(f"{video_files[0] = }")
@@ -55,8 +56,9 @@ for video_idx, video_file in enumerate(tqdm(video_files, desc="Creating Labels f
     
     video_fname = os.path.basename(video_file).split('.')[0]
 
-    dst_txt_filename = os.path.join(src_text_dir, f"{video_fname}.txt")
-    gt_text = get_gt_text(dst_txt_filename)
+    src_text_dir = os.path.dirname(video_file)
+    src_txt_filename = os.path.join(src_text_dir, f"{video_fname}.txt")
+    gt_text = get_gt_text(src_txt_filename)
     gt_len = len(gt_text.split())
 
     if total_frames > 500 or total_frames <= 0:

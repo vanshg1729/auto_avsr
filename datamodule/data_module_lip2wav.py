@@ -106,7 +106,7 @@ class DataModulePhrase(LightningDataModule):
 
         dataloader = torch.utils.data.DataLoader(
             ds,
-            batch_size=5,
+            batch_size=4,
             shuffle=False,
             num_workers=4,
             collate_fn=collate_fn,

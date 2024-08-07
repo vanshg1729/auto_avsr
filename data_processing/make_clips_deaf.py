@@ -42,12 +42,13 @@ parser.add_argument(
 parser.add_argument(
     '--speaker',
     type=str,
-    default='benny-large',
+    default='realdeafdreamer',
     help='Name of speaker'
 )
 
 args = parser.parse_args()
 
+min_clip_duration = 0.0
 src_speaker_dir = os.path.join(args.data_dir, args.speaker)
 src_vid_dir = os.path.join(src_speaker_dir, "videos")
 src_tracks_dir = os.path.join(src_speaker_dir, "face_tracks")
@@ -79,10 +80,25 @@ for video_idx, video_file in enumerate(tqdm(video_files, desc="Making Video Clip
 
     tracks_metadata = []
     total_clips = 0
+    clip_id = 0
     # Aligning the Face track to Sentence Segments and saving them
     for track_id, track in enumerate(tracks_list):
         # Get the clips for each of those tracks
-        track_clips = align_track_to_segments(track, aligned_segments, word_level=False)
+        track_clips = []
+        aligned_track_clips = align_track_to_segments(track, aligned_segments, word_level=False)
+
+        # Go through each of the segment clips aligned to the face track
+        for clip in aligned_track_clips:
+            clip_st = clip['start']
+            clip_end = clip['end']
+            clip_duration = clip_end - clip_st
+            # continue if clip is too small
+            if clip_duration < min_clip_duration:
+                continue
+            # store the clip
+            clip['clip_id'] = clip_id
+            track_clips.append(clip)
+            clip_id += 1
 
         # Save clips for each track
         track_metadata = save_track_clips(
@@ -101,6 +117,7 @@ for video_idx, video_file in enumerate(tqdm(video_files, desc="Making Video Clip
 
     # Saving the tracks metadata for this video
     video_clips_dir = os.path.join(dst_clips_dir, f"{video_fname}")
+    assert os.path.exists(video_clips_dir), f"There are no clips for video {video_fname}"
     track_metadata_path = os.path.join(video_clips_dir, "clips.json")
     with open(track_metadata_path, 'w') as json_file:
         json.dump(tracks_metadata, json_file)

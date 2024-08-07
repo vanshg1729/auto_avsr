@@ -31,7 +31,7 @@ parser = argparse.ArgumentParser(description="Phrases Preprocessing")
 parser.add_argument(
     "--data-dir",
     type=str,
-    default='/ssd_scratch/cvit/vanshg/Lip2Wav/Dataset',
+    default='/ssd_scratch/cvit/vanshg/datasets/deaf-youtube',
     help="Directory of original dataset",
 )
 parser.add_argument(
@@ -44,13 +44,13 @@ parser.add_argument(
 parser.add_argument(
     "--root-dir",
     type=str,
-    default='/ssd_scratch/cvit/vanshg/Lip2Wav/Dataset',
+    default='/ssd_scratch/cvit/vanshg/datasets/deaf-youtube',
     help="Root directory of preprocessed dataset",
 )
 parser.add_argument(
     '--speaker',
     type=str,
-    default='chem',
+    default='realdeafdreamer',
     help='Name of speaker'
 )
 parser.add_argument(

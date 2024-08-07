@@ -18,7 +18,7 @@ def main(cfg):
 
     print(f"Inside main() function")
     speaker = cfg.speaker
-    speaker = "benny"
+    speaker = "mead"
     finetune_type = cfg.finetune
     print(f"{cfg.finetune = }")
     finetune_func = finetune_funcs[finetune_type]
@@ -32,7 +32,7 @@ def main(cfg):
     dropout = cfg.model.visual_backbone.dropout_rate
 
     # Project Name and Folders
-    project_name = "auto_avsr_benny_deaf_finetuning"
+    project_name = f"auto_avsr_{speaker}_finetuning"
     # run_name = f"{speaker}_{finetune_type}_finetuning_const_lr{lr}_wd{wd}"
     run_name = f"{speaker}_{finetune_type}_finetuning_const_lr{lr}_wd{wd}_win{window}_stride{stride}_drop{dropout}"
     # run_name = f"{speaker}_freeze_frontend3D_finetuning_default_lr1e-4"
@@ -91,8 +91,8 @@ def main(cfg):
     print(f"{trainer.device_ids = }")
 
     # ckpt_path = '/ssd_scratch/cvit/vanshg/auto_avsr_benny_deaf_finetuning/benny_frontend_finetuning_const_lr0.001_wd0.03/lightning_logs/version_1/checkpoints/epoch=7-step=680.ckpt'
-    # trainer.fit(model=modelmodule, datamodule=datamodule)
-    trainer.validate(model=modelmodule, verbose=True, datamodule=datamodule)
+    trainer.fit(model=modelmodule, datamodule=datamodule)
+    # trainer.validate(model=modelmodule, verbose=True, datamodule=datamodule)
     # ensemble(cfg)
 
 if __name__ == "__main__":
