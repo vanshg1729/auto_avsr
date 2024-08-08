@@ -31,7 +31,7 @@ parser = argparse.ArgumentParser(description="Phrases Preprocessing")
 parser.add_argument(
     "--data-dir",
     type=str,
-    default='./datasets/deaf-youtube',
+    default='/ssd_scratch/cvit/vanshg/datasets/deaf-youtube',
     help="Directory of original dataset",
 )
 parser.add_argument(
@@ -44,7 +44,7 @@ parser.add_argument(
 parser.add_argument(
     "--root-dir",
     type=str,
-    default='./datasets/deaf-youtube',
+    default='/ssd_scratch/cvit/vanshg/datasets/deaf-youtube',
     help="Root directory of preprocessed dataset",
 )
 parser.add_argument(
@@ -212,7 +212,11 @@ def mp_handler(job):
         exit(0)
 
 def main(args):
-    video_files = glob.glob(os.path.join(src_vid_dir, "*.mp4"))
+    video_ids_file = os.path.join(src_speaker_dir, "old_videos.txt")
+    video_ids = open(video_ids_file, 'r').read().split()
+    print(f"{video_ids = }")
+    video_files = [os.path.join(src_vid_dir, f"{video_id}.mp4") for video_id in video_ids]
+    # video_files = glob.glob(os.path.join(src_vid_dir, "*.mp4"))
     video_files = sorted(video_files)
     # video_files = [os.path.join(src_vid_dir, "dyb71EMatR0.mp4")]
     print(f"Total number of Video Files: {len(video_files)}")

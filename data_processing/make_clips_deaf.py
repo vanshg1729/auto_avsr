@@ -45,7 +45,18 @@ parser.add_argument(
     default='realdeafdreamer',
     help='Name of speaker'
 )
-
+parser.add_argument(
+    '--num-jobs',
+    help='Number of processes (jobs) across which to run in parallel',
+    default=1,
+    type=int
+)
+parser.add_argument(
+    '--job-index',
+    type=int,
+    default=0,
+    help='Index to identify separate jobs (useful for parallel processing)'
+)
 args = parser.parse_args()
 
 min_clip_duration = 0.0
@@ -61,14 +72,9 @@ print(f"Src Tracks Dir: {src_tracks_dir}")
 print(f"Src Segments Dir: {src_segments_dir}")
 print(f"Dst Clips Dir: {dst_clips_dir}")
 
-video_files = glob.glob(os.path.join(src_vid_dir, "*.mp4"))
-video_files = sorted(video_files)
-print(f"Total number of Video Files: {len(video_files)}")
-print(f"{video_files[0] = }")
-
-for video_idx, video_file in enumerate(tqdm(video_files, desc="Making Video Clips")):
-    video_fname = os.path.basename(video_file).split('.')[0]
-    print(f"Processing video {video_idx} with path: {video_file}")
+def process_video_file(video_path, args, job_id=0, video_id=0):
+    video_fname = os.path.basename(video_path).split('.')[0]
+    print(f"Processing video {video_id} with path: {video_path}")
 
     # Get all the face tracks for this video
     video_tracks_path = os.path.join(src_tracks_dir, f"{video_fname}/tracks.json")
@@ -117,7 +123,9 @@ for video_idx, video_file in enumerate(tqdm(video_files, desc="Making Video Clip
 
     # Saving the tracks metadata for this video
     video_clips_dir = os.path.join(dst_clips_dir, f"{video_fname}")
-    assert os.path.exists(video_clips_dir), f"There are no clips for video {video_fname}"
+    if not os.path.exists(video_clips_dir):
+        print(f"There are no clips for video {video_fname}")
+    os.makedirs(video_clips_dir, exist_ok=True)
     track_metadata_path = os.path.join(video_clips_dir, "clips.json")
     with open(track_metadata_path, 'w') as json_file:
         json.dump(tracks_metadata, json_file)
@@ -125,3 +133,27 @@ for video_idx, video_file in enumerate(tqdm(video_files, desc="Making Video Clip
     # Copying the face tracks and aligned segments file
     shutil.copy(video_tracks_path, video_clips_dir)
     shutil.copy(video_segments_path, video_clips_dir)
+
+def main(args):
+    # Read the list of videos from videos.txt instead
+    # video_ids_file = os.path.join(src_speaker_dir, "old_videos.txt")
+    # video_ids = open(video_ids_file, 'r').read().split()
+    # print(f"{video_ids = }")
+    # video_files = [os.path.join(src_vid_dir, f"{video_id}.mp4") for video_id in video_ids]
+
+    video_files = glob.glob(os.path.join(src_vid_dir, "*.mp4"))
+    video_files = sorted(video_files)
+    print(f"Total number of Video Files: {len(video_files)}")
+    print(f"{video_files[0] = }")
+
+    unit = math.ceil(len(video_files) * 1.0 / args.num_jobs)
+    video_files = video_files[args.job_index * unit : (args.job_index + 1) * unit]
+    print(f"Number of files for this job index: {len(video_files)}")
+
+    for i, video_path in enumerate(tqdm(video_files, desc=f"Processing Video")):
+        process_video_file(video_path, args, job_id=args.job_index, video_id=i)
+    
+    print(f"WROTE SENTENCE_CLIPS ALL VIDEOS in job {args.job_index}/{args.num_jobs} OF SPEAKER {args.speaker}!!!")
+
+if __name__ == '__main__':
+    main(args)
