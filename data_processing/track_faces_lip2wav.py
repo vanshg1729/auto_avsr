@@ -31,7 +31,7 @@ parser = argparse.ArgumentParser(description="Phrases Preprocessing")
 parser.add_argument(
     "--data-dir",
     type=str,
-    default='/ssd_scratch/cvit/vanshg/datasets/deaf-youtube',
+    default='./datasets/deaf-youtube',
     help="Directory of original dataset",
 )
 parser.add_argument(
@@ -44,19 +44,19 @@ parser.add_argument(
 parser.add_argument(
     "--root-dir",
     type=str,
-    default='/ssd_scratch/cvit/vanshg/datasets/deaf-youtube',
+    default='./datasets/deaf-youtube',
     help="Root directory of preprocessed dataset",
 )
 parser.add_argument(
     '--speaker',
     type=str,
-    default='realdeafdreamer',
+    default='benny',
     help='Name of speaker'
 )
 parser.add_argument(
     '--ngpu',
     help='Number of GPUs across which to run in parallel',
-    default=4,
+    default=1,
     type=int
 )
 parser.add_argument(
@@ -117,7 +117,8 @@ def save_track(video_path, track, output_path, fps):
         return {}
 
     print(f"\nStart Frame: {start_frame} | End Frame: {end_frame}")
-    clip_video_ffmpeg(video_path, timestamp, output_path, verbose=True)
+    # This copies the stream instead of actually decoding and clipping so the length might be little different
+    clip_video_ffmpeg(video_path, timestamp, output_path, copy_stream=True, verbose=True)
     track_metadata = {'input_path': video_path, 'output_path': output_path,
                       'start_time': start_time, 'end_time': end_time, 'fps': fps,
                       "start_frame": start_frame, "end_frame": end_frame}
@@ -213,6 +214,7 @@ def mp_handler(job):
 def main(args):
     video_files = glob.glob(os.path.join(src_vid_dir, "*.mp4"))
     video_files = sorted(video_files)
+    # video_files = [os.path.join(src_vid_dir, "dyb71EMatR0.mp4")]
     print(f"Total number of Video Files: {len(video_files)}")
     print(f"{video_files[0] = }")
 

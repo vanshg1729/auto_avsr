@@ -22,31 +22,52 @@ def seconds_to_hhmmss(seconds):
     # print(f"{seconds = } | {hours = } | {minutes = } | {secs = }")
     return f"{hours:02}:{minutes:02}:{secs:06.3f}"
 
-def clip_video_ffmpeg(video_path, timestamsp, output_path, verbose=False):
+def clip_video_ffmpeg(video_path, timestamsp, output_path, copy_stream=False, verbose=False):
     output_dir = os.path.dirname(output_path)
 
     # create output directory if it does not exist
     os.makedirs(output_dir, exist_ok=True)
 
     start_time, end_time = timestamsp
+    duration = end_time - start_time
+
     start_time = seconds_to_hhmmss(start_time)
     end_time = seconds_to_hhmmss(end_time)
+    duration = seconds_to_hhmmss(duration)
     if verbose:
-        print(f"{start_time = } | {end_time = } | {video_path = } | {output_path = }")
+        print(f"{start_time = } | {end_time = } | {duration = } | {video_path = } | {output_path = }")
 
-    # Construct the ffmpeg command
+    # Construct the ffmpeg command (input of the command)
     command = [
         'ffmpeg',
         '-loglevel', 'panic',           # suppress output except for fatal errors
-        '-y',                            # Overwrite output file if it exists
-        '-ss', start_time,          # Start time
-        '-to', end_time,            # End time
-        '-i', video_path,                # Input file
-        '-c', 'copy',                    # Copy video and audio codec
+        '-y',                           # Overwrite output file if it exists
+        '-ss', start_time,              # Start time
+        '-t', duration,                # Duration
+        '-i', video_path,               # Input file
+        '-map', '0'                       # Include all the streams
+    ]
+
+    # Whether to copy the stream or not
+    if not copy_stream:
+        command.extend([
+            '-c:v', 'libx264',
+            '-c:a', 'aac',
+        ])
+    else:
+        command.extend([
+            '-c', 'copy',       # Copy video and audio codec
+        ])
+    
+    # Additional options + output_path
+    command.extend([
         # '-reset_timestamps', '1',       # Avoid negative timestamps
         # '-avoid_negative_ts', 'make_zero', # Avoid negative timestamps
-        output_path                    # Output file
-    ]
+        output_path
+    ])
+
+    if verbose:
+        print(command)
 
     # Run the ffmpeg command
     subprocess.run(command, check=True)
