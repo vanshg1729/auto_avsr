@@ -64,9 +64,10 @@ def read_vtt(file_path):
             continue
 
         if '-->' in line:
-            times = line.split(' --> ')
+            # times = line.split(' --> ')
+            times = line.split()
             current_entry['start'] = times[0]
-            current_entry['end'] = times[1]
+            current_entry['end'] = times[2]
         elif line:
             if 'text' not in current_entry:
                 current_entry['text'] = line

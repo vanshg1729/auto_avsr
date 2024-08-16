@@ -30,19 +30,19 @@ parser = argparse.ArgumentParser(description="Phrases Preprocessing")
 parser.add_argument(
     "--data-dir",
     type=str,
-    default='/ssd_scratch/cvit/vanshg/datasets/deaf-youtube/',
+    default='/ssd_scratch/cvit/vanshg/datasets/accented_speakers',
     help="Directory of original dataset",
 )
 parser.add_argument(
     "--root-dir",
     type=str,
-    default='/ssd_scratch/cvit/vanshg/datasets/deaf-youtube',
+    default='/ssd_scratch/cvit/vanshg/datasets/accented_speakers',
     help="Root directory of preprocessed dataset",
 )
 parser.add_argument(
     '--speaker',
     type=str,
-    default='realdeafdreamer',
+    default='jack',
     help='Name of speaker'
 )
 parser.add_argument(
@@ -61,11 +61,12 @@ args = parser.parse_args()
 
 min_clip_duration = 0.0
 src_speaker_dir = os.path.join(args.data_dir, args.speaker)
-src_vid_dir = os.path.join(src_speaker_dir, "videos")
+src_vid_dir = os.path.join(src_speaker_dir, "raw_videos")
 src_tracks_dir = os.path.join(src_speaker_dir, "face_tracks")
 src_segments_dir = os.path.join(src_speaker_dir, "captions")
 
 dst_clips_dir = os.path.join(src_speaker_dir, "sentence_clips")
+# dst_clips_dir = src_speaker_dir
 
 print(f"Src Video Dir: {src_vid_dir}, {os.path.exists(src_vid_dir)}")
 print(f"Src Tracks Dir: {src_tracks_dir}")
@@ -91,7 +92,7 @@ def process_video_file(video_path, args, job_id=0, video_id=0):
     for track_id, track in enumerate(tracks_list):
         # Get the clips for each of those tracks
         track_clips = []
-        aligned_track_clips = align_track_to_segments(track, aligned_segments, word_level=False)
+        aligned_track_clips = align_track_to_segments(track, aligned_segments, min_clip_len=0.5, word_level=False)
 
         # Go through each of the segment clips aligned to the face track
         for clip in aligned_track_clips:
@@ -136,19 +137,20 @@ def process_video_file(video_path, args, job_id=0, video_id=0):
 
 def main(args):
     # Read the list of videos from videos.txt instead
-    # video_ids_file = os.path.join(src_speaker_dir, "old_videos.txt")
+    # video_ids_file = os.path.join(src_speaker_dir, "copy_all_video_ids.txt")
     # video_ids = open(video_ids_file, 'r').read().split()
     # print(f"{video_ids = }")
     # video_files = [os.path.join(src_vid_dir, f"{video_id}.mp4") for video_id in video_ids]
 
-    video_files = glob.glob(os.path.join(src_vid_dir, "*.mp4"))
-    video_files = sorted(video_files)
+    # video_files = glob.glob(os.path.join(src_vid_dir, "*.mp4"))
+    # video_files = sorted(video_files)
+    video_files = [os.path.join(src_vid_dir, "_0MutuU6eks.mp4")]
     print(f"Total number of Video Files: {len(video_files)}")
     print(f"{video_files[0] = }")
 
     unit = math.ceil(len(video_files) * 1.0 / args.num_jobs)
     video_files = video_files[args.job_index * unit : (args.job_index + 1) * unit]
-    print(f"Number of files for this job index: {len(video_files)}")
+    print(f"Number of files for job {args.job_index}/{args.num_jobs} index: {len(video_files)}")
 
     for i, video_path in enumerate(tqdm(video_files, desc=f"Processing Video")):
         process_video_file(video_path, args, job_id=args.job_index, video_id=i)

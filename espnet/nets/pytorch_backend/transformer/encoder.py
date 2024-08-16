@@ -112,6 +112,7 @@ class Encoder(torch.nn.Module):
             pos_enc_class = RelPositionalEncoding
         elif encoder_attn_layer_type == "legacy_rel_mha":
             pos_enc_class = LegacyRelPositionalEncoding
+
         # -- frontend module.
         if input_layer == "conv1d":
             self.frontend = Conv1dResNet(
@@ -122,6 +123,7 @@ class Encoder(torch.nn.Module):
             self.frontend = Conv3dResNet(relu_type=relu_type)
         else:
             self.frontend = None
+
         # -- backend module.
         if input_layer == "linear":
             self.embed = torch.nn.Sequential(
@@ -160,6 +162,7 @@ class Encoder(torch.nn.Module):
             )
         else:
             raise ValueError("unknown input_layer: " + input_layer)
+
         self.normalize_before = normalize_before
         if positionwise_layer_type == "linear":
             positionwise_layer = PositionwiseFeedForward

@@ -47,7 +47,7 @@ parser.add_argument(
 parser.add_argument(
     '--speaker',
     type=str,
-    default='jazzy',
+    default='realdeafdreamer',
     help='Name of speaker'
 )
 parser.add_argument(
@@ -94,13 +94,13 @@ audio_dataloader = AVSRDataLoader(modality='audio')
 seg_vid_len = seg_duration * 25
 
 src_speaker_dir = os.path.join(args.data_dir, f"{args.speaker}")
-src_txt_dir = os.path.join(src_speaker_dir, f"sentence_clips")
-src_vid_dir = os.path.join(src_speaker_dir, f"sentence_clips")
+src_txt_dir = os.path.join(src_speaker_dir, f"filtered_sentence_clips")
+src_vid_dir = os.path.join(src_speaker_dir, f"filtered_sentence_clips")
 
 dst_speaker_dir = os.path.join(args.root_dir, f"{args.speaker}")
-dst_vid_dir = os.path.join(dst_speaker_dir, f"processed_videos")
-dst_aud_dir = os.path.join(dst_speaker_dir, f"processed_audio")
-dst_txt_dir = os.path.join(dst_speaker_dir, f"transcriptions")
+dst_vid_dir = os.path.join(dst_speaker_dir, f"filtered_processed_videos")
+dst_aud_dir = os.path.join(dst_speaker_dir, f"filtered_processed_audio")
+dst_txt_dir = os.path.join(dst_speaker_dir, f"filtered_transcriptions")
 
 print(f"Src video dir = {src_vid_dir}")
 print(f"Src txt dir: {src_txt_dir}")
@@ -184,11 +184,11 @@ def main(args):
     # Video Filenames
     vid_filenames = glob.glob(os.path.join(src_vid_dir, "*/*.mp4"))
     vid_filenames = sorted(vid_filenames)
+    print(f"Total number of vid_filenames = {len(vid_filenames)}")
 
     unit = math.ceil(len(vid_filenames) * 1.0 / args.ngpu)
     vid_filenames = vid_filenames[args.job_index * unit : (args.job_index + 1) * unit]
-    # vid_filenames = [os.path.join(src_vid_dir, "obJ9XklnwSo/obJ9XklnwSo_49_161.mp4")]
-    print(len(vid_filenames))
+    print(f"Number of video files for job {args.job_index}/{args.ngpu} = {len(vid_filenames)}")
     print(vid_filenames[0])
 
     for i, video_path in enumerate(tqdm(vid_filenames, desc=f"Processing Video")):

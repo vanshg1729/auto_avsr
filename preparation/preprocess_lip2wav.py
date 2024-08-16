@@ -22,7 +22,7 @@ parser = argparse.ArgumentParser(description="Phrases Preprocessing")
 parser.add_argument(
     "--data-dir",
     type=str,
-    default='/ssd_scratch/cvit/vanshg/Lip2Wav/Dataset',
+    default='/ssd_scratch/cvit/vanshg/datasets/accented_speakers',
     help="Directory of original dataset",
 )
 parser.add_argument(
@@ -38,15 +38,9 @@ parser.add_argument(
     help="Directory of landmarks",
 )
 parser.add_argument(
-    "--root-dir",
-    type=str,
-    default='/ssd_scratch/cvit/vanshg/Lip2Wav/Dataset',
-    help="Root directory of preprocessed dataset",
-)
-parser.add_argument(
     '--speaker',
     type=str,
-    default='hs',
+    default='crazy_russian',
     help='Name of speaker'
 )
 parser.add_argument(
@@ -64,7 +58,7 @@ parser.add_argument(
 parser.add_argument(
     "--job-index",
     type=int,
-    default=0,
+    default=3,
     help="Index to identify separate jobs (useful for parallel processing).",
 )
 parser.add_argument(
@@ -95,7 +89,7 @@ def process_text(text):
 
 def get_gt_text(file_path):
     src_txt_filename = file_path
-    with open(src_txt_filename, "r") as file:
+    with open(src_txt_filename, "r", encoding='utf-8') as file:
         text = ' '.join(file.read().split(' ')[1:])
         text = process_text(text)
     
@@ -105,7 +99,7 @@ src_speaker_dir = os.path.join(args.data_dir, f"{args.speaker}")
 src_txt_dir = os.path.join(src_speaker_dir, f"sentence_clips")
 src_vid_dir = os.path.join(src_speaker_dir, f"sentence_clips")
 
-dst_speaker_dir = os.path.join(args.root_dir, f"{args.speaker}")
+dst_speaker_dir = os.path.join(args.data_dir, f"{args.speaker}")
 dst_vid_dir = os.path.join(dst_speaker_dir, f"processed_videos")
 dst_aud_dir = os.path.join(dst_speaker_dir, f"processed_audio")
 dst_txt_dir = os.path.join(dst_speaker_dir, f"transcriptions")
@@ -176,13 +170,26 @@ def preprocess_video_file(video_path, args, video_id=0):
 
 def main(args):
     # Video Filenames
+    # video_ids_file = os.path.join(src_speaker_dir, "all_video_ids.txt")
+    # video_ids = open(video_ids_file, 'r').read().split()
+    # vid_filenames = []
+    # print(f"{video_ids = }")
+    # for video_id in video_ids:
+    #     vid_filenames += glob.glob(os.path.join(src_vid_dir, f"{video_id}/*.mp4"))
+    # print(len(vid_filenames))
+    # vid_filenames = sorted(vid_filenames)
+
     vid_filenames = glob.glob(os.path.join(src_vid_dir, "*/*.mp4"))
     vid_filenames = sorted(vid_filenames)
+    # vid_filenames = glob.glob(os.path.join(src_vid_dir, "EiEIfBatnH8_crop/*.mp4"))
+    print(f"Total number of Video Files: {len(vid_filenames)}")
+    print(f"{vid_filenames[0] = }")
 
     unit = math.ceil(len(vid_filenames) * 1.0 / args.ngpu)
     vid_filenames = vid_filenames[args.job_index * unit : (args.job_index + 1) * unit]
     print(f"{len(vid_filenames) = }")
     print(vid_filenames[0])
+    print(f"Number of files for this job index: {len(vid_filenames)}")
 
     for i, video_path in enumerate(tqdm(vid_filenames, desc=f"Processing Video")):
         preprocess_video_file(video_path, args, video_id=i)

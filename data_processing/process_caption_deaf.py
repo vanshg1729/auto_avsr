@@ -19,19 +19,19 @@ parser = argparse.ArgumentParser(description="Phrases Preprocessing")
 parser.add_argument(
     "--data-dir",
     type=str,
-    default='/ssd_scratch/cvit/vanshg/datasets/deaf-youtube',
+    default='/ssd_scratch/cvit/vanshg/datasets/accented_speakers',
     help="Directory of original dataset",
 )
 parser.add_argument(
     "--root-dir",
     type=str,
-    default='/ssd_scratch/cvit/vanshg/datasets/deaf-youtube',
+    default='/ssd_scratch/cvit/vanshg/datasets/accented_speakers',
     help="Root directory of preprocessed dataset",
 )
 parser.add_argument(
     '--speaker',
     type=str,
-    default='realdeafdreamer',
+    default='jack',
     help='Name of speaker'
 )
 
@@ -45,6 +45,7 @@ print(f"DST Caption DIR: {dst_caption_dir}")
 
 def main():
     caption_files = glob.glob(os.path.join(src_caption_dir, "*.vtt"))
+    # caption_files = [os.path.join(src_caption_dir, "vfeDGg2N3sI.en-GB.vtt")]
     print(f"{len(caption_files)}")
     print(f"{caption_files[0] = }")
 

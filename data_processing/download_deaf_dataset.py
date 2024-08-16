@@ -10,13 +10,13 @@ parser = argparse.ArgumentParser(description="Downloading Videos")
 parser.add_argument(
     "--data-dir",
     type=str,
-    default='/ssd_scratch/cvit/vanshg/datasets/deaf-youtube/',
+    default='/ssd_scratch/cvit/vanshg/datasets/accented_speakers',
     help="Directory of original dataset",
 )
 parser.add_argument(
     '--speaker',
     type=str,
-    default='jazzy',
+    default='crazy_russian',
     help='Name of speaker'
 )
 parser.add_argument(
@@ -32,9 +32,6 @@ parser.add_argument(
     help='Index to identify separate jobs (useful for parallel processing)'
 )
 args = parser.parse_args()
-
-data_dir = "/ssd_scratch/cvit/vanshg/datasets/deaf-youtube"
-speaker_name = "jazzy"
 
 def download_video(video_id, download_dir):
    # Ensure the download path exists
@@ -100,7 +97,10 @@ def download_caption(video_id, download_dir, language_code='en'):
 
 def main(args):
     speaker_dir = os.path.join(args.data_dir, f"{args.speaker}")
+    assert os.path.exists(speaker_dir), f"{speaker_dir = } does not exists"
     video_ids_file = os.path.join(speaker_dir, f"all_video_ids.txt") # Path to text file with video ids
+    assert os.path.exists(video_ids_file), f"{video_ids_file = } does not exists"
+
     dst_vid_dir = os.path.join(speaker_dir, f"videos") # Path where videos will be downloaded
     dst_caption_dir = os.path.join(speaker_dir, f"captions")
 
@@ -111,7 +111,6 @@ def main(args):
             if video_id:
                 video_ids.append(video_id)
 
-    video_ids = video_ids[25:]
     unit = math.ceil(len(video_ids) * 1.0/args.num_jobs)
     video_ids = video_ids[args.job_index * unit : (args.job_index + 1) * unit]
     print(f"Number of video ids for this job index {args.job_index}: {len(video_ids)}")
@@ -121,7 +120,7 @@ def main(args):
         # if i > 0:
         #     break
         download_video(video_id, dst_vid_dir)
-        download_caption(video_id, dst_caption_dir)
+        # download_caption(video_id, dst_caption_dir)
 
 if __name__ == "__main__":
     main(args)

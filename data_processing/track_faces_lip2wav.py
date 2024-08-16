@@ -31,7 +31,7 @@ parser = argparse.ArgumentParser(description="Phrases Preprocessing")
 parser.add_argument(
     "--data-dir",
     type=str,
-    default='/ssd_scratch/cvit/vanshg/datasets/deaf-youtube',
+    default='/ssd_scratch/cvit/vanshg/datasets/accented_speakers',
     help="Directory of original dataset",
 )
 parser.add_argument(
@@ -42,33 +42,27 @@ parser.add_argument(
     help="Type of face detector. (Default: face_alignment)",
 )
 parser.add_argument(
-    "--root-dir",
-    type=str,
-    default='/ssd_scratch/cvit/vanshg/datasets/deaf-youtube',
-    help="Root directory of preprocessed dataset",
-)
-parser.add_argument(
     '--speaker',
     type=str,
-    default='benny',
+    default='crazy_russian',
     help='Name of speaker'
 )
 parser.add_argument(
     '--ngpu',
     help='Number of GPUs across which to run in parallel',
-    default=1,
+    default=4,
     type=int
 )
 parser.add_argument(
     "--job-index",
     type=int,
-    default=0,
+    default=3,
     help="Index to identify separate jobs (useful for parallel processing).",
 )
 parser.add_argument(
     '--batch-size',
     help='Single GPU Face Detection batch size',
-    default=64,
+    default=128,
     type=int
 )
 
@@ -212,13 +206,14 @@ def mp_handler(job):
         exit(0)
 
 def main(args):
-    video_ids_file = os.path.join(src_speaker_dir, "old_videos.txt")
-    video_ids = open(video_ids_file, 'r').read().split()
-    print(f"{video_ids = }")
-    video_files = [os.path.join(src_vid_dir, f"{video_id}.mp4") for video_id in video_ids]
-    # video_files = glob.glob(os.path.join(src_vid_dir, "*.mp4"))
+    # video_ids_file = os.path.join(src_speaker_dir, "all_video_ids.txt")
+    # video_ids = open(video_ids_file, 'r').read().split()
+    # print(f"{video_ids = }")
+    # video_files = [os.path.join(src_vid_dir, f"{video_id}.mp4") for video_id in video_ids]
+
+    video_files = glob.glob(os.path.join(src_vid_dir, "*.mp4"))
+    # video_files = [os.path.join(src_vid_dir, "EiEIfBatnH8_crop.mp4")]
     video_files = sorted(video_files)
-    # video_files = [os.path.join(src_vid_dir, "dyb71EMatR0.mp4")]
     print(f"Total number of Video Files: {len(video_files)}")
     print(f"{video_files[0] = }")
 

@@ -18,7 +18,7 @@ def main(cfg):
 
     print(f"Inside main() function")
     speaker = cfg.speaker
-    speaker = "chem"
+    speaker = "yann_lecun"
     finetune_type = cfg.finetune
     print(f"{cfg.finetune = }")
     finetune_func = finetune_funcs[finetune_type]
@@ -30,9 +30,10 @@ def main(cfg):
     stride = ds_args.time_mask_stride
     dropout = cfg.model.visual_backbone.dropout_rate
 
-    project_name = f"auto_avsr_{speaker}_orig_finetune"
+    # project_name = f"auto_avsr_{speaker}_orig_finetune"
+    project_name = f"auto_avsr_{speaker}_finetune"
     # run_name = f"{speaker}_{finetune_type}_finetuning_const_lr{lr}_wd{wd}_win{window}_stride{stride}_drop{dropout}"
-    run_name = f"{speaker}_{finetune_type}_step_lr{lr}_wd{wd}_win{window}_stride{stride}_drop{dropout}"
+    run_name = f"{speaker}_{finetune_type}_warmup_lr{lr}_wd{wd}_win{window}_stride{stride}_drop{dropout}"
     # run_name = f"{speaker}_{finetune_type}_finetuning_const_lr{lr}_wd{wd}_drop{dropout}"
     # run_name = f"{speaker}_freeze_frontend3D_finetuning_default_lr1e-4"
     cfg.log_folder = os.path.join(cfg.logging_dir, f"{project_name}/{run_name}")

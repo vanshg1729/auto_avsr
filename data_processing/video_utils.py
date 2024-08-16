@@ -370,10 +370,11 @@ def save_track_clips(face_track, track_id, track_clips, input_vid_dir, output_cl
         clip_end = clip['end']
         # print(f"{clip_st = } | {clip_end = }")
         # print(f"{roundoff = }")
-        # if roundoff:
-        #     print(f"INSIDE Roundoff")
-        #     clip_st = round_down(clip_st)
-        #     clip_end = round_up(clip_end)
+        if roundoff:
+            # print(f"INSIDE Roundoff")
+            clip_st = round_down(clip_st)
+            # clip_end = clip_end + 0.20
+            clip_end = round_up(clip_end)
         seg_id = clip['seg_id']
         clip_id = clip['clip_id']
         sentence = clip['sentence']
@@ -396,7 +397,8 @@ def save_track_clips(face_track, track_id, track_clips, input_vid_dir, output_cl
             "end": clip_end,
             "sentence": sentence,
             "segment_id": seg_id,
-            "clip_output_path": output_clip_path
+            'clip_id': clip_id,
+            "clip_output_path": output_clip_path,
         }
         track_metadata['clips'].append(clip_metadata)
     
