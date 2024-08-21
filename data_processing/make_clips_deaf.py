@@ -30,38 +30,38 @@ parser = argparse.ArgumentParser(description="Phrases Preprocessing")
 parser.add_argument(
     "--data-dir",
     type=str,
-    default='/ssd_scratch/cvit/vanshg/datasets/accented_speakers',
+    default='/ssd_scratch/cvit/vanshg/datasets/deaf-youtube',
     help="Directory of original dataset",
 )
 parser.add_argument(
     "--root-dir",
     type=str,
-    default='/ssd_scratch/cvit/vanshg/datasets/accented_speakers',
+    default='/ssd_scratch/cvit/vanshg/datasets/deaf-youtube',
     help="Root directory of preprocessed dataset",
 )
 parser.add_argument(
     '--speaker',
     type=str,
-    default='jack',
+    default='jazzy',
     help='Name of speaker'
 )
 parser.add_argument(
     '--num-jobs',
     help='Number of processes (jobs) across which to run in parallel',
-    default=1,
+    default=4,
     type=int
 )
 parser.add_argument(
     '--job-index',
     type=int,
-    default=0,
+    default=3,
     help='Index to identify separate jobs (useful for parallel processing)'
 )
 args = parser.parse_args()
 
 min_clip_duration = 0.0
 src_speaker_dir = os.path.join(args.data_dir, args.speaker)
-src_vid_dir = os.path.join(src_speaker_dir, "raw_videos")
+src_vid_dir = os.path.join(src_speaker_dir, "videos")
 src_tracks_dir = os.path.join(src_speaker_dir, "face_tracks")
 src_segments_dir = os.path.join(src_speaker_dir, "captions")
 
@@ -142,9 +142,9 @@ def main(args):
     # print(f"{video_ids = }")
     # video_files = [os.path.join(src_vid_dir, f"{video_id}.mp4") for video_id in video_ids]
 
-    # video_files = glob.glob(os.path.join(src_vid_dir, "*.mp4"))
-    # video_files = sorted(video_files)
-    video_files = [os.path.join(src_vid_dir, "_0MutuU6eks.mp4")]
+    video_files = glob.glob(os.path.join(src_vid_dir, "*.mkv"))
+    video_files = sorted(video_files)
+    # video_files = [os.path.join(src_vid_dir, "_0MutuU6eks.mp4")]
     print(f"Total number of Video Files: {len(video_files)}")
     print(f"{video_files[0] = }")
 

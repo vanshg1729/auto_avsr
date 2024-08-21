@@ -39,15 +39,9 @@ parser.add_argument(
     help="Directory of landmarks",
 )
 parser.add_argument(
-    "--root-dir",
-    type=str,
-    default='/ssd_scratch/cvit/vanshg/datasets/deaf-youtube',
-    help="Root directory of preprocessed dataset",
-)
-parser.add_argument(
     '--speaker',
     type=str,
-    default='realdeafdreamer',
+    default='jazzy',
     help='Name of speaker'
 )
 parser.add_argument(
@@ -94,13 +88,13 @@ audio_dataloader = AVSRDataLoader(modality='audio')
 seg_vid_len = seg_duration * 25
 
 src_speaker_dir = os.path.join(args.data_dir, f"{args.speaker}")
-src_txt_dir = os.path.join(src_speaker_dir, f"filtered_sentence_clips")
-src_vid_dir = os.path.join(src_speaker_dir, f"filtered_sentence_clips")
+src_txt_dir = os.path.join(src_speaker_dir, f"sentence_clips")
+src_vid_dir = os.path.join(src_speaker_dir, f"sentence_clips")
 
-dst_speaker_dir = os.path.join(args.root_dir, f"{args.speaker}")
-dst_vid_dir = os.path.join(dst_speaker_dir, f"filtered_processed_videos")
-dst_aud_dir = os.path.join(dst_speaker_dir, f"filtered_processed_audio")
-dst_txt_dir = os.path.join(dst_speaker_dir, f"filtered_transcriptions")
+dst_speaker_dir = os.path.join(args.data_dir, f"{args.speaker}")
+dst_vid_dir = os.path.join(dst_speaker_dir, f"processed_videos")
+dst_aud_dir = os.path.join(dst_speaker_dir, f"processed_audio")
+dst_txt_dir = os.path.join(dst_speaker_dir, f"transcriptions")
 
 print(f"Src video dir = {src_vid_dir}")
 print(f"Src txt dir: {src_txt_dir}")
@@ -132,7 +126,7 @@ def preprocess_video_file(video_path, args, video_id=0):
     vid_clips_dir = os.path.join(src_vid_dir, f"{vid_folder_name}")
 
     video_fname = os.path.basename(video_path).split('.')[0]
-    data_filename = os.path.join(vid_clips_dir, f"{video_fname}.mp4")
+    data_filename = os.path.join(vid_clips_dir, f"{video_fname}.mkv")
     try:
         video_data = video_dataloader.load_data(data_filename, None)
         audio_data = audio_dataloader.load_data(data_filename)
@@ -182,7 +176,7 @@ def preprocess_video_file(video_path, args, video_id=0):
 
 def main(args):
     # Video Filenames
-    vid_filenames = glob.glob(os.path.join(src_vid_dir, "*/*.mp4"))
+    vid_filenames = glob.glob(os.path.join(src_vid_dir, "*/*.mkv"))
     vid_filenames = sorted(vid_filenames)
     print(f"Total number of vid_filenames = {len(vid_filenames)}")
 

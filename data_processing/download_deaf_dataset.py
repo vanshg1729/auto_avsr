@@ -10,13 +10,13 @@ parser = argparse.ArgumentParser(description="Downloading Videos")
 parser.add_argument(
     "--data-dir",
     type=str,
-    default='/ssd_scratch/cvit/vanshg/datasets/accented_speakers',
+    default='/ssd_scratch/cvit/vanshg/datasets/lip2wav',
     help="Directory of original dataset",
 )
 parser.add_argument(
     '--speaker',
     type=str,
-    default='crazy_russian',
+    default='chem',
     help='Name of speaker'
 )
 parser.add_argument(
@@ -40,8 +40,10 @@ def download_video(video_id, download_dir):
 
     # Construct the youtube-dl command
     command = [
-        "youtube-dl",
-        "-f", "best",
+        "yt-dlp",
+        "-f", "bv*[height<=720]+ba/b[height<=720]",
+        "--merge-output-format", 'mkv',
+        # "-f", "best",
         "https://www.youtube.com/watch?v=" + video_id,
         "-o", os.path.join(download_dir, "%(id)s.%(ext)s")
     ]
@@ -69,7 +71,7 @@ def download_caption(video_id, download_dir, language_code='en'):
 
     # Construct the youtube-dl command for captions
     command = [
-        "youtube-dl",
+        "yt-dlp",
         "--write-sub",  # Write subtitle file
         "--skip-download",  # Skip downloading the video
         # "--all-subs",
@@ -98,7 +100,7 @@ def download_caption(video_id, download_dir, language_code='en'):
 def main(args):
     speaker_dir = os.path.join(args.data_dir, f"{args.speaker}")
     assert os.path.exists(speaker_dir), f"{speaker_dir = } does not exists"
-    video_ids_file = os.path.join(speaker_dir, f"all_video_ids.txt") # Path to text file with video ids
+    video_ids_file = os.path.join(speaker_dir, f"train.txt") # Path to text file with video ids
     assert os.path.exists(video_ids_file), f"{video_ids_file = } does not exists"
 
     dst_vid_dir = os.path.join(speaker_dir, f"videos") # Path where videos will be downloaded
@@ -120,7 +122,7 @@ def main(args):
         # if i > 0:
         #     break
         download_video(video_id, dst_vid_dir)
-        # download_caption(video_id, dst_caption_dir)
+        download_caption(video_id, dst_caption_dir)
 
 if __name__ == "__main__":
     main(args)

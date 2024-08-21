@@ -31,7 +31,7 @@ parser = argparse.ArgumentParser(description="Phrases Preprocessing")
 parser.add_argument(
     "--data-dir",
     type=str,
-    default='/ssd_scratch/cvit/vanshg/datasets/accented_speakers',
+    default='/ssd_scratch/cvit/vanshg/datasets/lip2wav',
     help="Directory of original dataset",
 )
 parser.add_argument(
@@ -44,7 +44,7 @@ parser.add_argument(
 parser.add_argument(
     '--speaker',
     type=str,
-    default='crazy_russian',
+    default='hs',
     help='Name of speaker'
 )
 parser.add_argument(
@@ -62,7 +62,7 @@ parser.add_argument(
 parser.add_argument(
     '--batch-size',
     help='Single GPU Face Detection batch size',
-    default=128,
+    default=32,
     type=int
 )
 
@@ -184,7 +184,7 @@ def process_video_file(video_path, args, gpu_id=0, video_id=0):
             for track in face_tracker.saved_tracks:
                  if track['saved'] == False:
                     save_id = track['save_id']
-                    out_vid_path = os.path.join(clips_dir, f"track-{save_id}.mp4")
+                    out_vid_path = os.path.join(clips_dir, f"track-{save_id}.mkv")
                     track_metadata = save_track(video_path, track, out_vid_path, fps)
                     if len(track_metadata):
                          tracks_metadata.append(track_metadata)
@@ -211,7 +211,7 @@ def main(args):
     # print(f"{video_ids = }")
     # video_files = [os.path.join(src_vid_dir, f"{video_id}.mp4") for video_id in video_ids]
 
-    video_files = glob.glob(os.path.join(src_vid_dir, "*.mp4"))
+    video_files = glob.glob(os.path.join(src_vid_dir, "*.mkv"))
     # video_files = [os.path.join(src_vid_dir, "EiEIfBatnH8_crop.mp4")]
     video_files = sorted(video_files)
     print(f"Total number of Video Files: {len(video_files)}")

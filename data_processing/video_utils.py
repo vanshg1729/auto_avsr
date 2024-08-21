@@ -349,6 +349,7 @@ def align_track_to_segments(track, segments, min_clip_len=0.9, word_level=False,
 
 def save_track_clips(face_track, track_id, track_clips, input_vid_dir, output_clip_dir, roundoff=False, verbose=False):
     video_fname = os.path.basename(face_track['input_path']).split('.')[0]
+    ext = 'mkv'
 
     def round_up(number):
         return math.ceil(number * 10) / 10
@@ -379,10 +380,10 @@ def save_track_clips(face_track, track_id, track_clips, input_vid_dir, output_cl
         clip_id = clip['clip_id']
         sentence = clip['sentence']
 
-        input_video_path = os.path.join(input_vid_dir, f"{video_fname}.mp4")
+        input_video_path = os.path.join(input_vid_dir, f"{video_fname}.{ext}")
         video_clips_dir = os.path.join(output_clip_dir, f"{video_fname}")
         os.makedirs(video_clips_dir, exist_ok=True)
-        output_clip_path = os.path.join(video_clips_dir, f"{video_fname}_{track_id}_{seg_id}_{clip_id}.mp4")
+        output_clip_path = os.path.join(video_clips_dir, f"{video_fname}_{track_id}_{seg_id}_{clip_id}.{ext}")
 
         # Save the clip 
         clip_video_ffmpeg(input_video_path, (clip_st, clip_end), output_clip_path, verbose=verbose)

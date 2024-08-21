@@ -19,19 +19,13 @@ parser = argparse.ArgumentParser(description="Phrases Preprocessing")
 parser.add_argument(
     "--data-dir",
     type=str,
-    default='/ssd_scratch/cvit/vanshg/datasets/accented_speakers',
+    default='/ssd_scratch/cvit/vanshg/datasets/deaf-youtube',
     help="Directory of original dataset",
-)
-parser.add_argument(
-    "--root-dir",
-    type=str,
-    default='/ssd_scratch/cvit/vanshg/datasets/accented_speakers',
-    help="Root directory of preprocessed dataset",
 )
 parser.add_argument(
     '--speaker',
     type=str,
-    default='jack',
+    default='jazzy',
     help='Name of speaker'
 )
 

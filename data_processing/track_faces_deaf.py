@@ -40,21 +40,15 @@ parser.add_argument(
     help="Type of face detector. (Default: retinaface)",
 )
 parser.add_argument(
-    "--root-dir",
-    type=str,
-    default='/ssd_scratch/cvit/vanshg/datasets/deaf-youtube',
-    help="Root directory of preprocessed dataset",
-)
-parser.add_argument(
     '--speaker',
     type=str,
-    default='benny',
+    default='jazzy',
     help='Name of speaker'
 )
 parser.add_argument(
     '--ngpu',
     help='Number of GPUs across which to run in parallel',
-    default=1,
+    default=4,
     type=int
 )
 parser.add_argument(

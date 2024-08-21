@@ -22,7 +22,7 @@ parser = argparse.ArgumentParser(description="Phrases Preprocessing")
 parser.add_argument(
     "--data-dir",
     type=str,
-    default='/ssd_scratch/cvit/vanshg/datasets/accented_speakers',
+    default='/ssd_scratch/cvit/vanshg/datasets/lip2wav',
     help="Directory of original dataset",
 )
 parser.add_argument(
@@ -40,7 +40,7 @@ parser.add_argument(
 parser.add_argument(
     '--speaker',
     type=str,
-    default='crazy_russian',
+    default='eh',
     help='Name of speaker'
 )
 parser.add_argument(
@@ -119,7 +119,7 @@ def preprocess_video_file(video_path, args, video_id=0):
     vid_clips_dir = os.path.join(src_vid_dir, f"{vid_folder_name}")
 
     video_fname = os.path.basename(video_path).split('.')[0]
-    data_filename = os.path.join(vid_clips_dir, f"{video_fname}.mp4")
+    data_filename = os.path.join(vid_clips_dir, f"{video_fname}.mkv")
     try:
         video_data = video_dataloader.load_data(data_filename, None)
         audio_data = audio_dataloader.load_data(data_filename)
@@ -179,7 +179,7 @@ def main(args):
     # print(len(vid_filenames))
     # vid_filenames = sorted(vid_filenames)
 
-    vid_filenames = glob.glob(os.path.join(src_vid_dir, "*/*.mp4"))
+    vid_filenames = glob.glob(os.path.join(src_vid_dir, "*/*.mkv"))
     vid_filenames = sorted(vid_filenames)
     # vid_filenames = glob.glob(os.path.join(src_vid_dir, "EiEIfBatnH8_crop/*.mp4"))
     print(f"Total number of Video Files: {len(vid_filenames)}")
