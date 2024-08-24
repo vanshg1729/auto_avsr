@@ -44,7 +44,7 @@ parser.add_argument(
 parser.add_argument(
     '--speaker',
     type=str,
-    default='hs',
+    default='chess',
     help='Name of speaker'
 )
 parser.add_argument(
@@ -113,11 +113,11 @@ def save_track(video_path, track, output_path, fps):
     print(f"\nStart Frame: {start_frame} | End Frame: {end_frame}")
     # This copies the stream instead of actually decoding and clipping so the length might be little different
     clip_video_ffmpeg(video_path, timestamp, output_path, copy_stream=True, verbose=True)
+
     track_metadata = {'input_path': video_path, 'output_path': output_path,
                       'start_time': start_time, 'end_time': end_time, 'fps': fps,
                       "start_frame": start_frame, "end_frame": end_frame}
     print(f"Saved the face track with {num_frames = } to {output_path}")
-
     return track_metadata
 
 def crop_frame(frame, speaker):
@@ -125,7 +125,7 @@ def crop_frame(frame, speaker):
 		return frame
 	elif speaker == "chess":
 		H, W = frame.shape[:2]
-		return frame[H//3:, W//2:]
+		return frame[H//4:, W//2:]
 	elif speaker == "dl" or speaker == "eh":
 		return  frame[int(frame.shape[0]*3/4):, int(frame.shape[1]*3/4): ]
 	else:
@@ -161,6 +161,11 @@ def process_video_file(video_path, args, gpu_id=0, video_id=0):
     # Batch Processing of Frames
     for frame_ids, frames in tqdm(video_loader, total=total_frames//batch_size, 
                                   desc=f"Processing video {video_id} Frame Batches"):
+        if args.speaker == 'chess':
+            for j in range(len(frames)):
+                frame = frames[j]
+                frames[j] = crop_frame(frame, speaker='chess')
+
         if args.detector == 'retinaface':
             preds = get_batch_prediction_retinaface(frames, face_detector)
             frames_bboxes = get_bboxes_from_retina_preds(preds)
@@ -178,7 +183,8 @@ def process_video_file(video_path, args, gpu_id=0, video_id=0):
 
             # Update the tracker again in case of last frame
             if frame_idx == total_frames - 1:
-                 face_tracker.update([], frame_idx + 1)
+                print(f"Last frame: {frame_idx = } | {total_frames = }")
+                face_tracker.update([], frame_idx + 1)
 
             # Look through all the saved tracks to find any new tracks
             for track in face_tracker.saved_tracks:
@@ -190,6 +196,19 @@ def process_video_file(video_path, args, gpu_id=0, video_id=0):
                          tracks_metadata.append(track_metadata)
                     
                     track['saved'] = True
+
+    # End all the active tracks using this trick
+    face_tracker.update([], total_frames + 1)
+
+    # Look through all the saved tracks to find any new tracks
+    for track in face_tracker.saved_tracks:
+        if track['saved'] == False:
+            save_id = track['save_id']
+            out_vid_path = os.path.join(clips_dir, f"track-{save_id}.mkv")
+            track_metadata = save_track(video_path, track, out_vid_path, fps)
+            if len(track_metadata):
+                    tracks_metadata.append(track_metadata)
+            track['saved'] = True
 
     # Save the tracks.json metadata file after all tracks have been detected
     metadata_file_dir = os.path.dirname(metadata_filepath)
@@ -212,7 +231,8 @@ def main(args):
     # video_files = [os.path.join(src_vid_dir, f"{video_id}.mp4") for video_id in video_ids]
 
     video_files = glob.glob(os.path.join(src_vid_dir, "*.mkv"))
-    # video_files = [os.path.join(src_vid_dir, "EiEIfBatnH8_crop.mp4")]
+    # video_files = [os.path.join(src_vid_dir, "08wqqenaDXs.mkv")]
+    # video_files = [os.path.join(src_vid_dir, "3ph5hPsxdt0.mkv")]
     video_files = sorted(video_files)
     print(f"Total number of Video Files: {len(video_files)}")
     print(f"{video_files[0] = }")
