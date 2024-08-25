@@ -14,7 +14,7 @@ parser = argparse.ArgumentParser(description="Phrases Preprocessing")
 parser.add_argument(
     "--data-dir",
     type=str,
-    default='/ssd_scratch/cvit/vanshg/datasets/deaf-youtube',
+    default='./datasets/deaf-youtube',
     help="Directory of original dataset",
 )
 parser.add_argument(
@@ -32,8 +32,8 @@ parser.add_argument(
 args = parser.parse_args()
 
 src_speaker_dir = os.path.join(args.data_dir, args.speaker)
-src_vid_dir = os.path.join(src_speaker_dir, "raw_videos")
-src_ocr_dir = os.path.join(src_speaker_dir, "ocr_testing")
+src_vid_dir = os.path.join(src_speaker_dir, "videos")
+src_ocr_dir = os.path.join(src_speaker_dir, "ocr_outputs")
 src_crops_dir = os.path.join(src_speaker_dir, "gaussian_bbox_frames")
 
 dst_transcript_dir = os.path.join(src_speaker_dir, "ocr_transcripts")
@@ -65,7 +65,7 @@ def process_video_file(video_path):
 
         frame_name = os.path.basename(txt_file).split('.')[0]
         frame_idx = frame_name.split('_')[1]
-        frame_filepath = os.path.join(src_vid_crops_dir, f"{frame_name}.jpg")
+        frame_filepath = os.path.join(src_vid_crops_dir, f"{frame_name}.png")
 
         frame_ocr_out = {
             'frame_number': int(frame_idx),
@@ -158,7 +158,7 @@ def get_video_ocr_transcripts(frame_ocr_outputs, fps):
     return transcripts
 
 def main(args):
-    vid_filenames = [os.path.join(src_vid_dir, "3aAi2dqQ1iI.mkv")]
+    vid_filenames = [os.path.join(src_vid_dir, "qAt94Wmcavw.mkv")]
 
     for i, video_path in enumerate(tqdm(vid_filenames, desc=f"Processing Video")):
         process_video_file(video_path)

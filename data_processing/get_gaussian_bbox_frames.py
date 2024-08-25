@@ -2,6 +2,7 @@ import os
 import cv2
 import numpy as np
 import glob
+from PIL import Image
 
 from tqdm import tqdm
 
@@ -10,7 +11,7 @@ parser = argparse.ArgumentParser(description="Phrases Preprocessing")
 parser.add_argument(
     "--data-dir",
     type=str,
-    default='/ssd_scratch/cvit/vanshg/datasets/deaf-youtube',
+    default='./datasets/deaf-youtube',
     help="Directory of original dataset",
 )
 parser.add_argument(
@@ -54,13 +55,15 @@ def process_video_file(video_path, args, video_id):
             gray_frame = cv2.cvtColor(cropped_frame, cv2.COLOR_BGR2GRAY)
 
             # Create a binary mask where white areas are white (255) and others are black (0)
-            _, mask = cv2.threshold(gray_frame, 200, 255, cv2.THRESH_BINARY)
+            _, mask = cv2.threshold(gray_frame, 240, 255, cv2.THRESH_BINARY)
 
             # Apply the mask to the cropped frame
-            white_parts = cv2.bitwise_and(cropped_frame, cropped_frame, mask=mask)
-            
-            # now we apply a small gaussian blur to remove noise
-            white_parts = cv2.GaussianBlur(white_parts, (3, 3), 0)
+            # white_parts = cv2.bitwise_and(cropped_frame, cropped_frame, mask=mask)
+            white_parts = np.copy(gray_frame)
+
+            white_parts[gray_frame >= 240] = 255
+            white_parts[gray_frame < 240] = 0
+            # white_parts = cv2.GaussianBlur(white_parts, (3, 3), 0)
 
             # Save every frame
             frame_filename = os.path.join(dst_vid_crops_dir, f"frame_{frame_count:05d}.png")

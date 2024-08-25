@@ -19,7 +19,7 @@ parser = argparse.ArgumentParser(description="Phrases Preprocessing")
 parser.add_argument(
     "--data-dir",
     type=str,
-    default='/ssd_scratch/cvit/vanshg/datasets/deaf-youtube',
+    default='./datasets/deaf-youtube',
     help="Directory of original dataset",
 )
 parser.add_argument(
@@ -31,16 +31,16 @@ parser.add_argument(
 parser.add_argument(
     '--num-workers',
     help='Number of processes (jobs) across which to run in parallel',
-    default=36,
+    default=4,
     type=int
 )
 args = parser.parse_args()
 
 src_speaker_dir = os.path.join(args.data_dir, args.speaker)
 
-src_vid_dir = os.path.join(src_speaker_dir, "raw_videos")
+src_vid_dir = os.path.join(src_speaker_dir, "videos")
 src_crops_dir = os.path.join(src_speaker_dir, "gaussian_bbox_frames")
-dst_ocr_dir = os.path.join(src_speaker_dir, "ocr_testing")
+dst_ocr_dir = os.path.join(src_speaker_dir, "ocr_outputs")
 
 ocr = PaddleOCR(lang='en', use_angle_cls=True)
 # ocr = PaddleOCR(lang='en')
@@ -89,7 +89,8 @@ def worker(input_queue, worker_id, progress_bar, progress_lock):
 def main():
     num_workers = args.num_workers
     print(f"Num workers: {num_workers}")
-    video_files = [os.path.join(src_vid_dir, f"3aAi2dqQ1iI.mkv")]
+    # video_files = glob.glob(os.path.join(src_vid_dir, f"*.mkv"))
+    video_files = [os.path.join(src_vid_dir, f"qAt94Wmcavw.mkv")]
 
     for video_path in video_files:
         video_name = os.path.basename(video_path).split('.')[0]
@@ -104,8 +105,9 @@ def main():
         total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
         cap.release()
 
-        frame_filepaths = glob.glob(os.path.join(src_vid_crops_dir, "*.jpg"))
+        frame_filepaths = glob.glob(os.path.join(src_vid_crops_dir, "*.png"))
         frame_filepaths = sorted(frame_filepaths)
+        frame_filepaths = frame_filepaths[:3500]
         print(f"Number of Frame Filepaths: {len(frame_filepaths)}")
 
         # Create an input queue for communication between processes
@@ -119,7 +121,9 @@ def main():
                 p.start()
                 workers.append(p)
 
-            for frame_path in frame_filepaths:
+            for frame_idx, frame_path in enumerate(frame_filepaths):
+                if frame_idx > 3500:
+                    break
                 print(frame_path)
                 frame_filename = os.path.basename(frame_path).split('.')[0]
                 frame_idx = int(frame_filename.split('_')[1])
