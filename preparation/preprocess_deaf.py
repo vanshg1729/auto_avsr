@@ -41,7 +41,7 @@ parser.add_argument(
 parser.add_argument(
     '--speaker',
     type=str,
-    default='jazzy',
+    default='cochlear_kaz',
     help='Name of speaker'
 )
 parser.add_argument(
@@ -65,7 +65,7 @@ parser.add_argument(
 parser.add_argument(
     "--job-index",
     type=int,
-    default=3,
+    default=0,
     help="Index to identify separate jobs (useful for parallel processing).",
 )
 parser.add_argument(

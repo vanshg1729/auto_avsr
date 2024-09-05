@@ -31,7 +31,7 @@ parser = argparse.ArgumentParser(description="Phrases Preprocessing")
 parser.add_argument(
     "--data-dir",
     type=str,
-    default='/ssd_scratch/cvit/vanshg/datasets/lip2wav',
+    default='/ssd_scratch/cvit/vanshg/datasets/accented_speakers',
     help="Directory of original dataset",
 )
 parser.add_argument(
@@ -50,7 +50,7 @@ parser.add_argument(
 parser.add_argument(
     '--speaker',
     type=str,
-    default='hs',
+    default='trump',
     help='Name of speaker'
 )
 parser.add_argument(
@@ -128,9 +128,10 @@ def main(args):
     # print(f"{video_ids = }")
     # video_files = [os.path.join(src_vid_dir, f"{video_id}.mp4") for video_id in video_ids]
 
-    video_files = glob.glob(os.path.join(src_vid_dir, "*.mkv"))
+    video_files = glob.glob(os.path.join(src_vid_dir, "*.mp4"))
     # video_files = [os.path.join(src_vid_dir, "EiEIfBatnH8_crop.mp4")]
     video_files = sorted(video_files)
+    print(f"{video_files = }")
     print(f"Total number of Video Files: {len(video_files)}")
     print(f"{video_files[0] = }")
 

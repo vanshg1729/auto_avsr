@@ -16,6 +16,7 @@ def split_video(input_file, output_dir, clip_length=1200):
         # '-c', 'copy',
         '-c:v', 'libx264',          
         '-c:a', 'aac',
+        # '-r', '25',
         '-segment_time', str(clip_length),  # Set the segment length (in seconds)
         '-f', 'segment',           # Instruct ffmpeg to output segmented files
         '-reset_timestamps', '1',  # Reset timestamps at the start of each segment
@@ -26,7 +27,7 @@ def split_video(input_file, output_dir, clip_length=1200):
     subprocess.run(command, check=True)
 
 # Example usage
-input_video = '/ssd_scratch/cvit/vanshg/datasets/accented_speakers/jack/raw_videos/ETWbMaxGmbA.mp4'
-output_directory = '/ssd_scratch/cvit/vanshg/datasets/accented_speakers/jack/videos'
-os.makedirs(output_directory)
+input_video = '/ssd_scratch/cvit/vanshg/datasets/accented_speakers/trump/raw_videos/3NFkMLAT3nk.mkv'
+output_directory = '/ssd_scratch/cvit/vanshg/datasets/accented_speakers/trump/videos'
+os.makedirs(output_directory, exist_ok=True)
 split_video(input_video, output_directory)

@@ -22,7 +22,7 @@ parser = argparse.ArgumentParser(description="Phrases Preprocessing")
 parser.add_argument(
     "--data-dir",
     type=str,
-    default='/ssd_scratch/cvit/vanshg/datasets/lip2wav',
+    default='/ssd_scratch/cvit/vanshg/datasets/deaf-youtube',
     help="Directory of original dataset",
 )
 parser.add_argument(
@@ -40,7 +40,7 @@ parser.add_argument(
 parser.add_argument(
     '--speaker',
     type=str,
-    default='eh',
+    default='mia_sandra',
     help='Name of speaker'
 )
 parser.add_argument(
@@ -58,7 +58,7 @@ parser.add_argument(
 parser.add_argument(
     "--job-index",
     type=int,
-    default=3,
+    default=0,
     help="Index to identify separate jobs (useful for parallel processing).",
 )
 parser.add_argument(
@@ -104,10 +104,10 @@ dst_vid_dir = os.path.join(dst_speaker_dir, f"processed_videos")
 dst_aud_dir = os.path.join(dst_speaker_dir, f"processed_audio")
 dst_txt_dir = os.path.join(dst_speaker_dir, f"transcriptions")
 
-print(f"Src video dir = {src_vid_dir}")
-print(f"Src txt dir: {src_txt_dir}")
-print(f"DST vid dir = {dst_vid_dir}")
-print(f"DST txt dir = {dst_txt_dir}")
+print(f"Src video dir = {src_vid_dir}, {os.path.exists(src_vid_dir) = }")
+print(f"Src txt dir: {src_txt_dir}, {os.path.exists(src_txt_dir) = }")
+print(f"DST vid dir = {dst_vid_dir}, {os.path.exists(dst_vid_dir) = }")
+print(f"DST txt dir = {dst_txt_dir}, {os.path.exists(dst_txt_dir) = }")
 
 os.makedirs(dst_vid_dir, exist_ok=True)
 os.makedirs(dst_txt_dir, exist_ok=True)
@@ -119,7 +119,7 @@ def preprocess_video_file(video_path, args, video_id=0):
     vid_clips_dir = os.path.join(src_vid_dir, f"{vid_folder_name}")
 
     video_fname = os.path.basename(video_path).split('.')[0]
-    data_filename = os.path.join(vid_clips_dir, f"{video_fname}.mkv")
+    data_filename = os.path.join(vid_clips_dir, f"{video_fname}.mp4")
     try:
         video_data = video_dataloader.load_data(data_filename, None)
         audio_data = audio_dataloader.load_data(data_filename)
@@ -179,9 +179,9 @@ def main(args):
     # print(len(vid_filenames))
     # vid_filenames = sorted(vid_filenames)
 
-    vid_filenames = glob.glob(os.path.join(src_vid_dir, "*/*.mkv"))
+    vid_filenames = glob.glob(os.path.join(src_vid_dir, "*/*.mp4"))
+    # vid_filenames = glob.glob(os.path.join(src_vid_dir, "vativsC3YgU/*.mkv"))
     vid_filenames = sorted(vid_filenames)
-    # vid_filenames = glob.glob(os.path.join(src_vid_dir, "EiEIfBatnH8_crop/*.mp4"))
     print(f"Total number of Video Files: {len(vid_filenames)}")
     print(f"{vid_filenames[0] = }")
 
@@ -189,7 +189,7 @@ def main(args):
     vid_filenames = vid_filenames[args.job_index * unit : (args.job_index + 1) * unit]
     print(f"{len(vid_filenames) = }")
     print(vid_filenames[0])
-    print(f"Number of files for this job index: {len(vid_filenames)}")
+    print(f"Number of files for this job index {args.job_index}/{args.ngpu}: {len(vid_filenames)}")
 
     for i, video_path in enumerate(tqdm(vid_filenames, desc=f"Processing Video")):
         preprocess_video_file(video_path, args, video_id=i)

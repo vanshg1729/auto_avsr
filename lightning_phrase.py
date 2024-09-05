@@ -123,6 +123,7 @@ class ModelModule(LightningModule):
     def validation_step(self, batch, batch_idx, dataloader_idx=0):
         """
             - batch: tensor of shape (T, C=1, H, W)
+            NOTE: This is only to be used with Batch Size = 1 and no collate function
         """
         # Preparing the input for the model
         idx = dataloader_idx # idx is same as dataloader index
@@ -155,8 +156,10 @@ class ModelModule(LightningModule):
         predicted = self.text_transform.post_process(predicted_token_id).replace("<eos>", "")
 
         # Calculating the word distance
+        video_path = batch['video_path']
         token_id = batch["target"] # (Lmax,)
-        actual = self.text_transform.post_process(token_id)
+        actual = batch['transcript']
+        # actual = self.text_transform.post_process(token_id)
         word_distance = compute_word_level_distance(actual, predicted) # edit distance
         word_distance = torch.tensor(word_distance).to(self.device) # (1, )
         gt_len = torch.tensor(len(actual.split())).to(self.device) # length of GT sentence (1, )
@@ -204,6 +207,7 @@ class ModelModule(LightningModule):
         if self.cfg.verbose:
             print(f"\n{'*' * 70}"
                   + f"\n{dataloader_idx = }"
+                  + f"\n{data_id} video_path: {video_path}"
                   + f"\n{data_id} GT: {actual}"
                   + f"\n{data_id} Pred: {predicted}"
                   + f"\n{data_id} dist = {word_distance}, len: {len(actual.split())}"
@@ -217,6 +221,7 @@ class ModelModule(LightningModule):
             wd = word_distance.item()
             data = [
                 data_id.item(),
+                video_path,
                 actual,
                 predicted,
                 gt_len,
@@ -399,6 +404,7 @@ class ModelModule(LightningModule):
                 if self.global_rank == 0:
                     row_names = [
                         "Index",
+                        "Video Path",
                         "Ground Truth Text",
                         "Predicted Text",
                         "Length",

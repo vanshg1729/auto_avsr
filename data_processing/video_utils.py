@@ -374,7 +374,7 @@ def save_track_clips(face_track, track_id, track_clips, input_vid_dir, output_cl
         if roundoff:
             # print(f"INSIDE Roundoff")
             clip_st = round_down(clip_st)
-            # clip_end = clip_end + 0.20
+            clip_end = clip_end + 0.1
             clip_end = round_up(clip_end)
         seg_id = clip['seg_id']
         clip_id = clip['clip_id']

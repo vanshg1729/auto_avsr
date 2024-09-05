@@ -25,7 +25,7 @@ parser.add_argument(
 parser.add_argument(
     '--speaker',
     type=str,
-    default='jazzy',
+    default='rikki',
     help='Name of speaker'
 )
 

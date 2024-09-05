@@ -37,6 +37,17 @@ class AVSRDataLoader:
             return audio
         if self.modality == "video":
             video = self.load_video(data_filename)
+            print(f"video shape before: {video.shape = }")
+            # Only done for speaker chess from Lip2Wav Dataset
+            # T, H, W, C = video.shape
+            # frames = []
+            # for frame in video:
+            #     # frame.shape = (H, W, C)
+            #     frame_new = frame[H//4:, W//2:, :]
+            #     frames.append(frame_new)
+            # video = np.array(frames)
+            print(f"video shape after: {video.shape = }")
+
             if not landmarks:
                 landmarks = self.landmarks_detector(video)
                 print(f"Got the face landmarks")

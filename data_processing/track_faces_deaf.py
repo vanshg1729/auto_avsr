@@ -42,7 +42,7 @@ parser.add_argument(
 parser.add_argument(
     '--speaker',
     type=str,
-    default='jazzy',
+    default='mia_sandra',
     help='Name of speaker'
 )
 parser.add_argument(
@@ -54,7 +54,7 @@ parser.add_argument(
 parser.add_argument(
     '--job-index',
     help='Job id for splitting the processing',
-    default=0,
+    default=3,
     type=int
 )
 parser.add_argument(
@@ -248,13 +248,18 @@ def process_video_file(video_path, args, gpu_id=0, video_id=0):
         print(f"Saved the tracks metadata to {metadata_filepath}")
 
 def main(args):
-    video_files = glob.glob(os.path.join(src_vid_dir, "*.mp4"))
+    video_ids_file = os.path.join(src_speaker_dir, "new_video_ids2.txt")
+    video_ids = open(video_ids_file, 'r').read().split()
+    print(f"{video_ids = }")
+    video_files = [os.path.join(src_vid_dir, f"{video_id}.mkv") for video_id in video_ids]
+
+    # video_files = glob.glob(os.path.join(src_vid_dir, "*.mkv"))
     video_files = sorted(video_files)
     print(f"Total number of Video Files: {len(video_files)}")
     print(f"{video_files[0] = }")
 
     for video_idx, video_path in enumerate(tqdm(video_files, desc="Processing Video")):
-        process_video_file(video_path, args, video_id=video_idx)
+        process_video_file(video_path, args, gpu_id=gpu_id, video_id=video_idx)
 
     print(f"WROTE FACE_TRACKS OF ALL VIDEOS OF SPEAKER {args.speaker} !!!")
 

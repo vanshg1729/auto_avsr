@@ -118,7 +118,8 @@ class PhraseDataset(torch.utils.data.Dataset):
 
         video = load_video(video_filepath)
         video = self.video_transform(video) # (T, 1, H, W)
-        return {"input": video, "target": token_id, 'idx': torch.tensor(idx)}
+        return {"input": video, "target": token_id, 'transcript': gt_text,
+                'idx': torch.tensor(idx), 'video_path': vid_path}
 
     def __len__(self):
         return len(self.video_list)

@@ -23,7 +23,7 @@ parser.add_argument(
 args = parser.parse_args()
 
 speaker_dir = os.path.join(args.data_dir, args.speaker)
-src_clips_dir = os.path.join(speaker_dir, 'sentence_clips')
+src_clips_dir = os.path.join(speaker_dir, 'website_sentence_clips')
 dst_clips_dir = os.path.join(speaker_dir, 'filtered_sentence_clips')
 
 print(f"SPEAKER DIR: {speaker_dir}")
@@ -31,6 +31,7 @@ print(f"SRC CLIPS DIR: {src_clips_dir}")
 print(f"DST CLIPS DIR: {dst_clips_dir}")
 
 def filter_sentence_clips(src_vid_folder):
+    assert os.path.exists(src_vid_folder), f"{src_vid_folder} does not exists"
     video_name = os.path.basename(src_vid_folder)
     dst_vid_folder = os.path.join(dst_clips_dir, f"{video_name}")
     os.makedirs(dst_vid_folder, exist_ok=True)
@@ -66,12 +67,13 @@ def filter_sentence_clips(src_vid_folder):
             
             video_clip_name = os.path.basename(video_clip_data['clip_output_path']).split('.')[0]
             src_clip_filepath = os.path.join(src_vid_folder, f"{video_clip_name}.mp4")
+            assert os.path.exists(src_clip_filepath), f"{src_clip_filepath} does not exists"
 
             dst_clip_filepath = os.path.join(dst_vid_folder, f"{video_clip_name}.mp4")
             dst_txt_filepath = os.path.join(dst_vid_folder, f"{video_clip_name}.txt")
             # print(f"{dst_clip_filepath = }")
             # print(f"{dst_txt_filepath = }")
-
+   
             # Write the Ground Truth Sentence
             with open(dst_txt_filepath, 'w') as file:
                 file.write(f"{dst_clip_filepath} {gt_text}")
@@ -82,11 +84,12 @@ def filter_sentence_clips(src_vid_folder):
     print(f"\nTotal video clips = {total_video_clips} | Accepted video clips = {accepted_video_clips}\n")
 
 def main(args):
-    # video_ids_path = os.path.join(speaker_dir, "copy_all_video_ids.txt")
+    # video_ids_path = os.path.join(speaker_dir, "all_video_ids.txt")
     # video_ids = open(video_ids_path, 'r').read().split()
     video_ids = os.listdir(src_clips_dir)
+    # video_ids = ["vativsC3YgU"]
     video_folders = [os.path.join(src_clips_dir, f"{video_id}") for video_id in video_ids]
-    print(f"\nNumber of {video_folders = }")
+    print(f"\nNumber of {len(video_folders) = }")
     print(f"{video_folders[0] = }")
     
     for src_vid_folder in tqdm(video_folders, desc="Filtering Video Clips"):

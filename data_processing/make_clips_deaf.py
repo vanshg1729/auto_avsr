@@ -42,7 +42,7 @@ parser.add_argument(
 parser.add_argument(
     '--speaker',
     type=str,
-    default='jazzy',
+    default='mia_sandra',
     help='Name of speaker'
 )
 parser.add_argument(
@@ -137,14 +137,14 @@ def process_video_file(video_path, args, job_id=0, video_id=0):
 
 def main(args):
     # Read the list of videos from videos.txt instead
-    # video_ids_file = os.path.join(src_speaker_dir, "copy_all_video_ids.txt")
-    # video_ids = open(video_ids_file, 'r').read().split()
-    # print(f"{video_ids = }")
-    # video_files = [os.path.join(src_vid_dir, f"{video_id}.mp4") for video_id in video_ids]
+    video_ids_file = os.path.join(src_speaker_dir, "new_video_ids2.txt")
+    video_ids = open(video_ids_file, 'r').read().split()
+    print(f"{video_ids = }")
+    video_files = [os.path.join(src_vid_dir, f"{video_id}.mkv") for video_id in video_ids]
 
-    video_files = glob.glob(os.path.join(src_vid_dir, "*.mkv"))
+    # video_files = glob.glob(os.path.join(src_vid_dir, "*.mkv"))
+    # video_files = [os.path.join(src_vid_dir, "qtfZ4sHWaHk.mkv")]
     video_files = sorted(video_files)
-    # video_files = [os.path.join(src_vid_dir, "_0MutuU6eks.mp4")]
     print(f"Total number of Video Files: {len(video_files)}")
     print(f"{video_files[0] = }")
 

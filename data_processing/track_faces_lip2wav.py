@@ -31,7 +31,7 @@ parser = argparse.ArgumentParser(description="Phrases Preprocessing")
 parser.add_argument(
     "--data-dir",
     type=str,
-    default='/ssd_scratch/cvit/vanshg/datasets/lip2wav',
+    default='/ssd_scratch/cvit/vanshg/datasets/deaf-youtube',
     help="Directory of original dataset",
 )
 parser.add_argument(
@@ -44,7 +44,7 @@ parser.add_argument(
 parser.add_argument(
     '--speaker',
     type=str,
-    default='chess',
+    default='mia_sandra',
     help='Name of speaker'
 )
 parser.add_argument(
@@ -225,13 +225,12 @@ def mp_handler(job):
         exit(0)
 
 def main(args):
-    # video_ids_file = os.path.join(src_speaker_dir, "all_video_ids.txt")
-    # video_ids = open(video_ids_file, 'r').read().split()
-    # print(f"{video_ids = }")
-    # video_files = [os.path.join(src_vid_dir, f"{video_id}.mp4") for video_id in video_ids]
+    video_ids_file = os.path.join(src_speaker_dir, "new_video_ids2.txt")
+    video_ids = open(video_ids_file, 'r').read().split()
+    print(f"{video_ids = }")
+    video_files = [os.path.join(src_vid_dir, f"{video_id}.mkv") for video_id in video_ids]
 
-    video_files = glob.glob(os.path.join(src_vid_dir, "*.mkv"))
-    # video_files = [os.path.join(src_vid_dir, "08wqqenaDXs.mkv")]
+    # video_files = glob.glob(os.path.join(src_vid_dir, "*.mp4"))
     # video_files = [os.path.join(src_vid_dir, "3ph5hPsxdt0.mkv")]
     video_files = sorted(video_files)
     print(f"Total number of Video Files: {len(video_files)}")

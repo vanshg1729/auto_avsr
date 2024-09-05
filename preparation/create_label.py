@@ -14,12 +14,12 @@ from tqdm import tqdm
 from transforms import TextTransform
 from utils import save_vid_aud_txt, split_file
 
-data_dir = "/ssd_scratch/cvit/vanshg/datasets/accented_speakers"
-speaker_name = "crazy_russian"
+data_dir = "/ssd_scratch/cvit/vanshg/datasets/deaf-youtube"
+speaker_name = "realdeafdreamer"
 
 src_speaker_dir = os.path.join(data_dir, f"{speaker_name}")
-src_video_dir = os.path.join(src_speaker_dir, "processed_videos")
-src_text_dir = os.path.join(src_speaker_dir, f"transcriptions")
+src_video_dir = os.path.join(src_speaker_dir, f"filtered_processed_videos")
+src_text_dir = os.path.join(src_speaker_dir, f"filtered_transcriptions")
 
 print(f"SRC Speaker DIR: {src_speaker_dir}, {os.path.exists(src_speaker_dir)}")
 print(f"SRC Video DIR: {src_video_dir}, {os.path.exists(src_video_dir)}")
@@ -43,7 +43,7 @@ def get_gt_text(file_path):
     return text
 
 # Creating from video ids
-# video_ids_file = os.path.join(src_speaker_dir, "train_val_set.txt")
+# video_ids_file = os.path.join(src_speaker_dir, "train_new.txt")
 # video_ids = open(video_ids_file, 'r').read().split()
 # video_files = []
 # print(f"{video_ids = }")
@@ -55,7 +55,7 @@ def get_gt_text(file_path):
 video_files = glob.glob(os.path.join(src_video_dir, "*.mp4"))
 # video_files = glob.glob(os.path.join(src_speaker_dir, "sentence_clips/*/*.mp4"))
 # video_files = glob.glob(os.path.join(src_video_dir, "EiEIfBatnH8_crop*.mp4"))
-video_files = sorted(video_files)
+# video_files = sorted(video_files)
 
 print(f"{len(video_files) = }")
 print(f"{video_files[0] = }")
@@ -81,8 +81,8 @@ for video_idx, video_file in enumerate(tqdm(video_files, desc="Creating Labels f
         # continue
 
     if gt_len == 0:
-        print(f"File {video_idx = } {video_file} HAS 0 GT LEN")
-        # continue
+        print(f"File {video_idx = } {video_file} {gt_text = } HAS 0 GT LEN")
+        continue
 
     basename = os.path.relpath(video_file, start=data_dir)
     f.write(

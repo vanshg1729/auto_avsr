@@ -14,7 +14,7 @@ parser = argparse.ArgumentParser(description="Phrases Preprocessing")
 parser.add_argument(
     "--data-dir",
     type=str,
-    default='./datasets/deaf-youtube',
+    default='/ssd_scratch/cvit/vanshg/datasets/deaf-youtube',
     help="Directory of original dataset",
 )
 parser.add_argument(
@@ -22,12 +22,6 @@ parser.add_argument(
     type=str,
     default='mia_sandra',
     help='Name of speaker'
-)
-parser.add_argument(
-    '--num-workers',
-    help='Number of processes (jobs) across which to run in parallel',
-    default=36,
-    type=int
 )
 args = parser.parse_args()
 
@@ -158,9 +152,30 @@ def get_video_ocr_transcripts(frame_ocr_outputs, fps):
     return transcripts
 
 def main(args):
-    vid_filenames = [os.path.join(src_vid_dir, "qAt94Wmcavw.mkv")]
+    video_ids_file = os.path.join(src_speaker_dir, "new_video_ids2.txt")
+    video_ids = open(video_ids_file, 'r').read().split()
+    print(f"{video_ids = }")
+    video_files = [os.path.join(src_vid_dir, f"{video_id}.mkv") for video_id in video_ids]
 
-    for i, video_path in enumerate(tqdm(vid_filenames, desc=f"Processing Video")):
+    # video_files = glob.glob(os.path.join(src_vid_dir, "*.mkv"))
+    video_files = sorted(video_files)
+    # vid_filenames = [os.path.join(src_vid_dir, "qtfZ4sHWaHk.mkv")]
+
+    for i, video_path in enumerate(tqdm(video_files, desc=f"Processing Video")):
+        # video_name = os.path.basename(video_path).split('.')[0]
+        # src_vid_ocr_dir = os.path.join(dst_transcript_dir, f"{video_name}")
+        # ocr_output_file = os.path.join(src_vid_ocr_dir, "ocr_outputs_manual_fix.json")
+        # with open(ocr_output_file) as file:
+        #     ocr_json = json.load(file)
+        #     fps = ocr_json['fps']
+        #     ocr_outputs = ocr_json['ocr_outputs']
+        
+        # print(f"FPS: {fps} | {len(ocr_outputs) = }")
+        # ocr_transcripts = get_video_ocr_transcripts(ocr_outputs, fps)
+        # dst_transcript_json = os.path.join(dst_transcript_dir, f"{video_name}.json")
+        # with open(dst_transcript_json, 'w') as jsonfile:
+        #     json.dump(ocr_transcripts, jsonfile)
+
         process_video_file(video_path)
 
 if __name__ == '__main__':

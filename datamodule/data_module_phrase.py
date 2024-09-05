@@ -37,17 +37,28 @@ def pad(samples, pad_val=0.0):
 
 
 def collate_pad(batch):
+    # print(f"Inside the Collate Pad function")
     batch_out = {}
     if isinstance(batch, list):
         batch_keys = batch[0].keys()
     else:
         batch_keys = batch.keys()
+    
+    # print(f"{batch_keys = }")
     for data_type in batch_keys:
         if data_type == 'idx':
             batch_out['ids'] = torch.tensor(
                 [s[data_type] for s in batch]
             )
             continue
+        if data_type == 'video_path':
+            # print(f"The data type is {data_type = }")
+            batch_out['video_paths'] = [s[data_type] for s in batch]
+            continue
+        if data_type == 'transcript':
+            batch_out['transcripts'] = [s[data_type] for s in batch]
+            continue
+
         pad_val = -1 if data_type == "target" else 0.0
         c_batch, sample_lengths = pad(
             [s[data_type] for s in batch if s[data_type] is not None], pad_val
