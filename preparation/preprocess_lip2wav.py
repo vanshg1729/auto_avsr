@@ -58,7 +58,7 @@ parser.add_argument(
 parser.add_argument(
     "--job-index",
     type=int,
-    default=0,
+    default=3,
     help="Index to identify separate jobs (useful for parallel processing).",
 )
 parser.add_argument(
@@ -96,13 +96,13 @@ def get_gt_text(file_path):
     return text
 
 src_speaker_dir = os.path.join(args.data_dir, f"{args.speaker}")
-src_txt_dir = os.path.join(src_speaker_dir, f"sentence_clips")
-src_vid_dir = os.path.join(src_speaker_dir, f"sentence_clips")
+src_txt_dir = os.path.join(src_speaker_dir, f"filtered_sentence_clips")
+src_vid_dir = os.path.join(src_speaker_dir, f"filtered_sentence_clips")
 
 dst_speaker_dir = os.path.join(args.data_dir, f"{args.speaker}")
-dst_vid_dir = os.path.join(dst_speaker_dir, f"processed_videos")
-dst_aud_dir = os.path.join(dst_speaker_dir, f"processed_audio")
-dst_txt_dir = os.path.join(dst_speaker_dir, f"transcriptions")
+dst_vid_dir = os.path.join(dst_speaker_dir, f"filtered_processed_videos")
+dst_aud_dir = os.path.join(dst_speaker_dir, f"filtered_processed_audio")
+dst_txt_dir = os.path.join(dst_speaker_dir, f"filtered_transcriptions")
 
 print(f"Src video dir = {src_vid_dir}, {os.path.exists(src_vid_dir) = }")
 print(f"Src txt dir: {src_txt_dir}, {os.path.exists(src_txt_dir) = }")
@@ -119,7 +119,7 @@ def preprocess_video_file(video_path, args, video_id=0):
     vid_clips_dir = os.path.join(src_vid_dir, f"{vid_folder_name}")
 
     video_fname = os.path.basename(video_path).split('.')[0]
-    data_filename = os.path.join(vid_clips_dir, f"{video_fname}.mp4")
+    data_filename = os.path.join(vid_clips_dir, f"{video_fname}.mkv")
     try:
         video_data = video_dataloader.load_data(data_filename, None)
         audio_data = audio_dataloader.load_data(data_filename)
@@ -179,7 +179,7 @@ def main(args):
     # print(len(vid_filenames))
     # vid_filenames = sorted(vid_filenames)
 
-    vid_filenames = glob.glob(os.path.join(src_vid_dir, "*/*.mp4"))
+    vid_filenames = glob.glob(os.path.join(src_vid_dir, "*/*.mkv"))
     # vid_filenames = glob.glob(os.path.join(src_vid_dir, "vativsC3YgU/*.mkv"))
     vid_filenames = sorted(vid_filenames)
     print(f"Total number of Video Files: {len(vid_filenames)}")

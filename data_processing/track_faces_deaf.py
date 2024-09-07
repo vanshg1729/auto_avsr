@@ -42,19 +42,19 @@ parser.add_argument(
 parser.add_argument(
     '--speaker',
     type=str,
-    default='mia_sandra',
+    default='deafdaydreamer',
     help='Name of speaker'
 )
 parser.add_argument(
     '--ngpu',
     help='Number of GPUs across which to run in parallel',
-    default=4,
+    default=3,
     type=int
 )
 parser.add_argument(
     '--job-index',
     help='Job id for splitting the processing',
-    default=3,
+    default=0,
     type=int
 )
 parser.add_argument(
@@ -214,7 +214,7 @@ def process_video_file(video_path, args, gpu_id=0, video_id=0):
                 # Save the previous track if there is one
                 if len(tracks):
                     prev_track = tracks[-1]
-                    out_vid_path = os.path.join(clips_dir, f"track-{track_id}.mp4")
+                    out_vid_path = os.path.join(clips_dir, f"track-{track_id}.mkv")
                     track_metadata = save_track(video_path, prev_track, out_vid_path, fps)
                     if len(track_metadata):
                         tracks_metadata.append(track_metadata)
@@ -234,7 +234,7 @@ def process_video_file(video_path, args, gpu_id=0, video_id=0):
     # Save the last track if there is one left
     if len(tracks):
         prev_track = tracks[-1]
-        out_vid_path = os.path.join(clips_dir, f"track-{track_id}.mp4")
+        out_vid_path = os.path.join(clips_dir, f"track-{track_id}.mkv")
         track_metadata = save_track(video_path, prev_track, out_vid_path, fps)
         if len(track_metadata):
             tracks_metadata.append(track_metadata)
@@ -248,12 +248,12 @@ def process_video_file(video_path, args, gpu_id=0, video_id=0):
         print(f"Saved the tracks metadata to {metadata_filepath}")
 
 def main(args):
-    video_ids_file = os.path.join(src_speaker_dir, "new_video_ids2.txt")
-    video_ids = open(video_ids_file, 'r').read().split()
-    print(f"{video_ids = }")
-    video_files = [os.path.join(src_vid_dir, f"{video_id}.mkv") for video_id in video_ids]
+    # video_ids_file = os.path.join(src_speaker_dir, "new_video_ids2.txt")
+    # video_ids = open(video_ids_file, 'r').read().split()
+    # print(f"{video_ids = }")
+    # video_files = [os.path.join(src_vid_dir, f"{video_id}.mkv") for video_id in video_ids]
 
-    # video_files = glob.glob(os.path.join(src_vid_dir, "*.mkv"))
+    video_files = glob.glob(os.path.join(src_vid_dir, "*.mkv"))
     video_files = sorted(video_files)
     print(f"Total number of Video Files: {len(video_files)}")
     print(f"{video_files[0] = }")

@@ -17,7 +17,7 @@ parser.add_argument(
 parser.add_argument(
     '--speaker',
     type=str,
-    default='realdeafdreamer',
+    default='mia_sandra',
     help='Name of speaker'
 )
 args = parser.parse_args()
@@ -66,10 +66,10 @@ def filter_sentence_clips(src_vid_folder):
             gt_text = video_clip_data.get('updated_sentence', original_sentence)
             
             video_clip_name = os.path.basename(video_clip_data['clip_output_path']).split('.')[0]
-            src_clip_filepath = os.path.join(src_vid_folder, f"{video_clip_name}.mp4")
+            src_clip_filepath = os.path.join(src_vid_folder, f"{video_clip_name}.mkv")
             assert os.path.exists(src_clip_filepath), f"{src_clip_filepath} does not exists"
 
-            dst_clip_filepath = os.path.join(dst_vid_folder, f"{video_clip_name}.mp4")
+            dst_clip_filepath = os.path.join(dst_vid_folder, f"{video_clip_name}.mkv")
             dst_txt_filepath = os.path.join(dst_vid_folder, f"{video_clip_name}.txt")
             # print(f"{dst_clip_filepath = }")
             # print(f"{dst_txt_filepath = }")

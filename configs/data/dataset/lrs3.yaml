@@ -3,5 +3,8 @@ defaults:
 root_dir:
 label_dir: "labels"
 train_file: "lrs3_train_transcript_lengths_seg24s.csv"
-val_file: "lrs3_test_transcript_lengths_seg24s.csv"
+# val_file: "lrs3_test_transcript_lengths_seg24s.csv"
+val_file:
 test_file: "lrs3_test_transcript_lengths_seg24s.csv"
+time_mask_window: 10 # 10
+time_mask_stride: 25 # 25

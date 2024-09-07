@@ -16,19 +16,19 @@ parser.add_argument(
 parser.add_argument(
     '--speaker',
     type=str,
-    default='mia_sandra',
+    default='deafdaydreamer',
     help='Name of speaker'
 )
 parser.add_argument(
     '--num-jobs',
     help='Number of processes (jobs) across which to run in parallel',
-    default=2,
+    default=4,
     type=int
 )
 parser.add_argument(
     '--job-index',
     type=int,
-    default=1,
+    default=3,
     help='Index to identify separate jobs (useful for parallel processing)'
 )
 args = parser.parse_args()
@@ -100,7 +100,7 @@ def download_caption(video_id, download_dir, language_code='en'):
 def main(args):
     speaker_dir = os.path.join(args.data_dir, f"{args.speaker}")
     assert os.path.exists(speaker_dir), f"{speaker_dir = } does not exists"
-    video_ids_file = os.path.join(speaker_dir, f"new_video_ids2.txt") # Path to text file with video ids
+    video_ids_file = os.path.join(speaker_dir, f"all_video_ids.txt") # Path to text file with video ids
     assert os.path.exists(video_ids_file), f"{video_ids_file = } does not exists"
 
     dst_vid_dir = os.path.join(speaker_dir, f"videos") # Path where videos will be downloaded
@@ -124,7 +124,7 @@ def main(args):
         # if i > 0:
         #     break
         download_video(video_id, dst_vid_dir)
-        # download_caption(video_id, dst_caption_dir)
+        download_caption(video_id, dst_caption_dir)
 
 if __name__ == "__main__":
     main(args)

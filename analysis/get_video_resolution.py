@@ -1,8 +1,8 @@
 import os
 import subprocess
 
-data_dir = "/ssd_scratch/cvit/vanshg/datasets/deaf-youtube"
-speaker = "mia_sandra"
+data_dir = "/ssd_scratch/cvit/vanshg/datasets/accented_speakers"
+speaker = "diane_jennings"
 speaker_dir = os.path.join(data_dir, speaker)
 src_vid_dir = os.path.join(speaker_dir, "videos")
 

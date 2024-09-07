@@ -18,7 +18,7 @@ def main(cfg):
 
     print(f"Inside main() function")
     speaker = cfg.speaker
-    speaker = "cochlear_kaz"
+    speaker = "jack"
     finetune_type = cfg.finetune
     print(f"{cfg.finetune = }")
     finetune_func = finetune_funcs[finetune_type]
@@ -35,7 +35,7 @@ def main(cfg):
     # Project Name and Folders
     project_name = f"auto_avsr_{speaker}_finetuning"
     # run_name = f"{speaker}_{finetune_type}_finetuning_const_lr{lr}_wd{wd}"
-    run_name = f"{speaker}_{finetune_type}_finetuning_const_step_lr{lr}_wd{wd}_win{window}_stride{stride}_drop{dropout}_beam{beam_size}"
+    run_name = f"{speaker}_{finetune_type}_finetuning_const_lr{lr}_wd{wd}_win{window}_stride{stride}_drop{dropout}_beam{beam_size}"
     # run_name = f"{speaker}_freeze_frontend3D_finetuning_default_lr1e-4"
     cfg.log_folder = os.path.join(cfg.logging_dir, f"{project_name}/{run_name}")
     cfg.exp_dir = cfg.log_folder
@@ -77,6 +77,9 @@ def main(cfg):
     # Creating the Model Object
     modelmodule = ModelModule(cfg)
     finetune_func(modelmodule.model)
+    # for name, param in modelmodule.model.named_parameters():
+    #     if param.requires_grad == True:
+    #         print(f"{name} | {param.shape = } | {param.requires_grad = }")
     # freeze_frontend3D(modelmodule.model)
 
     # Creating the Trainer Object
@@ -91,7 +94,7 @@ def main(cfg):
     print(f"{trainer.num_devices = }")
     print(f"{trainer.device_ids = }")
 
-    # ckpt_path = '/ssd_scratch/cvit/vanshg/auto_avsr_benny_deaf_finetuning/benny_frontend_finetuning_const_lr0.001_wd0.03/lightning_logs/version_1/checkpoints/epoch=7-step=680.ckpt'
+    # ckpt_path = "/ssd_scratch/cvit/vanshg/auto_avsr_benny_finetuning/benny_encoders_bottom_half_finetuning_const_lr0.0001_wd1.0_win15_stride25_drop0.1_beam10/lightning_logs/version_0/checkpoints/epoch=10-step=1287.ckpt"
     trainer.fit(model=modelmodule, datamodule=datamodule)
     # trainer.validate(model=modelmodule, verbose=True, datamodule=datamodule)
     # ensemble(cfg)

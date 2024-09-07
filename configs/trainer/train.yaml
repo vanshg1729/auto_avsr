@@ -1,7 +1,7 @@
 precision: 32
-max_epochs: 10
+max_epochs: 11
 num_nodes: 1
-devices: [2]
+devices: [0, 1, 2, 3]
 sync_batchnorm: True
 default_root_dir: ${exp_dir}
 num_sanity_val_steps: 0
@@ -9,5 +9,6 @@ accumulate_grad_batches: 1
 gradient_clip_val: 5.0 # 5.0
 deterministic: warn
 barebones: False
+detect_anomaly: False
 # replace_sampler_ddp: False
 # resume_from_checkpoint:

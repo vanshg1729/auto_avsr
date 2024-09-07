@@ -86,10 +86,10 @@ class ModelModule(LightningModule):
         optimizer = torch.optim.AdamW([{"name": "model", "params": self.model.parameters(), "lr": self.cfg.optimizer.lr}], weight_decay=self.cfg.optimizer.weight_decay, betas=(0.9, 0.98))
         # scheduler = WarmupCosineScheduler(optimizer, self.cfg.optimizer.warmup_epochs, self.cfg.trainer.max_epochs, len(self.trainer.datamodule.train_dataloader()))
         # scheduler = {"scheduler": scheduler, "interval": "step", "frequency": 1}
-        scheduler = StepLR(optimizer, step_size=5, gamma=0.1)
-        scheduler = {"scheduler": scheduler, "interval": "epoch", "frequency": 1}
-        return [optimizer], [scheduler]
-        # return [optimizer]
+        # scheduler = StepLR(optimizer, step_size=5, gamma=0.1)
+        # scheduler = {"scheduler": scheduler, "interval": "epoch", "frequency": 1}
+        # return [optimizer], [scheduler]
+        return [optimizer]
 
     def forward(self, sample):
         """
@@ -264,6 +264,7 @@ class ModelModule(LightningModule):
         B, T, C, H, W = batch['inputs'].shape
         inputs = batch['inputs'].transpose(1, 2) # (B, C, T, H, W)
 
+        torch.cuda.empty_cache()
         loss, loss_ctc, loss_att, acc = self.model(inputs, batch["input_lengths"], batch["targets"])
         batch_size = len(batch["inputs"])
 
