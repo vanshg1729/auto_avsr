@@ -17,6 +17,8 @@ from espnet.nets.pytorch_backend.e2e_asr_transformer import E2E
 from espnet.nets.lm_interface import dynamic_import_lm
 from espnet.nets.scorers.ctc import CTCPrefixScorer
 from espnet.nets.scorers.length_bonus import LengthBonus
+import time
+from analysis.profile_utils import AverageMeter
 
 from utils.norm_utils import get_weight_norms, get_grad_norms
 import wandb
@@ -82,14 +84,19 @@ class ModelModule(LightningModule):
         self.cur_train_step = 0
         self.result_data = []
 
+        if self.global_rank == 0:
+            self.train_epoch_st = 0
+            self.train_epoch_time = 0
+            self.epoch_time_meter = AverageMeter()
+
     def configure_optimizers(self):
         optimizer = torch.optim.AdamW([{"name": "model", "params": self.model.parameters(), "lr": self.cfg.optimizer.lr}], weight_decay=self.cfg.optimizer.weight_decay, betas=(0.9, 0.98))
         # scheduler = WarmupCosineScheduler(optimizer, self.cfg.optimizer.warmup_epochs, self.cfg.trainer.max_epochs, len(self.trainer.datamodule.train_dataloader()))
         # scheduler = {"scheduler": scheduler, "interval": "step", "frequency": 1}
-        # scheduler = StepLR(optimizer, step_size=5, gamma=0.1)
-        # scheduler = {"scheduler": scheduler, "interval": "epoch", "frequency": 1}
-        # return [optimizer], [scheduler]
-        return [optimizer]
+        scheduler = StepLR(optimizer, step_size=5, gamma=0.1)
+        scheduler = {"scheduler": scheduler, "interval": "epoch", "frequency": 1}
+        return [optimizer], [scheduler]
+        # return [optimizer]
 
     def forward(self, sample):
         """
@@ -335,6 +342,8 @@ class ModelModule(LightningModule):
         self.epoch_loss_ctc = torch.tensor(0.0).to(self.device)
         self.epoch_loss_att = torch.tensor(0.0).to(self.device)
         self.epoch_size = torch.tensor(0.0).to(self.device)
+        if self.global_rank == 0:
+            self.train_epoch_st = time.time()
         return super().on_train_epoch_start()
     
     def on_train_epoch_end(self) -> None:
@@ -347,11 +356,17 @@ class ModelModule(LightningModule):
 
         # Logging from process with global rank = 0
         if self.global_rank == 0:
+            self.train_epoch_time = time.time() - self.train_epoch_st
+            self.epoch_time_meter.update(self.train_epoch_time)
+
             log_dict = {
                 "train_loss_epoch": self.epoch_loss/self.epoch_size,
                 "train_loss_ctc_epoch": self.epoch_loss_ctc/self.epoch_size,
                 "train_loss_att_epoch": self.epoch_loss_att/self.epoch_size,
                 "train_decoder_acc_epoch": self.epoch_acc/self.epoch_size,
+                "train_epoch_time": self.train_epoch_time,
+                "avg_train_epoch_time": self.epoch_time_meter.avg,
+                "total_train_epoch_time": self.epoch_time_meter.sum,
                 "epoch": self.current_epoch
             }
             self.log_dict(log_dict, logger=True)
