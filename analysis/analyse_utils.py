@@ -45,11 +45,13 @@ def get_speaker_df(clip_files):
                 processed_text = process_text(sentence)
                 num_words = len(sentence.split())
                 video_path = clip['clip_output_path']
+                video_name = os.path.basename(video_path).split('.')[0]
                 video_id = os.path.basename(os.path.dirname(video_path))
                 duration = end_time - start_time
 
                 video_data = {
                     'video_path': video_path,
+                    'video_name': video_name,
                     'video_id': video_id,
                     'status': clip_status,
                     'start': start_time,
