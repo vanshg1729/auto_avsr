@@ -40,7 +40,7 @@ python finetune_deaf.py exp_dir=/ssd_scratch/cvit/vanshg/deaf_youtube_exp \
 
 python inference.py data.modality=video \
                data.dataset.root_dir=/ssd_scratch/cvit/vanshg/datasets/deaf-youtube/ \
-               data.dataset.test_file=/ssd_scratch/cvit/vanshg/datasets/deaf-youtube/deafdaydreamer/all_labels.txt \
+               data.dataset.test_file=/ssd_scratch/cvit/vanshg/datasets/deaf-youtube/mia_sandra/all_labels.txt \
                pretrained_model_path=./checkpoints/lrs3/models/LRS3_V_WER19.1/model.pth
 
 # For Accented Dataset
