@@ -28,7 +28,7 @@ def seconds_to_hhmmss(seconds):
 seed = 40
 
 data_dir = "/ssd_scratch/cvit/vanshg/datasets/deaf-youtube"
-speaker_name = "benny"
+speaker_name = "deafdaydreamer"
 speaker_dir = os.path.join(data_dir, f"{speaker_name}")
 
 train_label_filepath = os.path.join(speaker_dir, "train_labels.txt")
@@ -40,7 +40,7 @@ rng.shuffle(label_lines)
 
 # List of reduced labels
 reduced_labels = []
-max_seconds = 2400 # 40 mins
+max_seconds = 2400 # 50 mins
 total_seconds = 0
 
 for i, line in enumerate(label_lines):
@@ -61,6 +61,7 @@ for i, line in enumerate(label_lines):
 reduced_label_filepath = os.path.join(speaker_dir, f"train_reduced{max_seconds}_{seed}_labels.txt")
 print(f"Total Number of Labels: {len(reduced_labels)}")
 print(f"Total Seconds: {total_seconds} | Total Time: {seconds_to_hhmmss(total_seconds)}")
+
 with open(reduced_label_filepath, 'w') as file:
     file.write('\n'.join(reduced_labels))
 

@@ -40,7 +40,7 @@ parser.add_argument(
 parser.add_argument(
     '--speaker',
     type=str,
-    default='mia_sandra',
+    default='deafdaydreamer',
     help='Name of speaker'
 )
 parser.add_argument(

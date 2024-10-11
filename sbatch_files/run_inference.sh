@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #SBATCH -A vanshg
-#SBATCH --nodelist=gnode070
+#SBATCH --nodelist=gnode075
 #SBATCH --gres=gpu:4
 #SBATCH --mem-per-cpu=2G
 #SBATCH -c 38
@@ -14,5 +14,5 @@ git checkout personalization
 
 python inference.py data.modality=video \
                data.dataset.root_dir=/ssd_scratch/cvit/vanshg/Lip2Wav/Dataset \
-               data.dataset.test_file=/ssd_scratch/cvit/vanshg/Lip2Wav/Dataset/dl/labels.txt \
+               data.dataset.test_file=/ssd_scratch/cvit/vanshg/Lip2Wav/Dataset/eh/labels.txt \
                pretrained_model_path=./checkpoints/lrs3/models/LRS3_V_WER19.1/model.pth

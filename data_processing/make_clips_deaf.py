@@ -137,12 +137,12 @@ def process_video_file(video_path, args, job_id=0, video_id=0):
 
 def main(args):
     # Read the list of videos from videos.txt instead
-    # video_ids_file = os.path.join(src_speaker_dir, "new_video_ids2.txt")
-    # video_ids = open(video_ids_file, 'r').read().split()
-    # print(f"{video_ids = }")
-    # video_files = [os.path.join(src_vid_dir, f"{video_id}.mkv") for video_id in video_ids]
+    video_ids_file = os.path.join(src_speaker_dir, "new_video_ids.txt")
+    video_ids = open(video_ids_file, 'r').read().split()
+    print(f"{video_ids = }")
+    video_files = [os.path.join(src_vid_dir, f"{video_id}.mkv") for video_id in video_ids]
 
-    video_files = glob.glob(os.path.join(src_vid_dir, "*.mkv"))
+    # video_files = glob.glob(os.path.join(src_vid_dir, "*.mkv"))
     # video_files = [os.path.join(src_vid_dir, "qtfZ4sHWaHk.mkv")]
     video_files = sorted(video_files)
     print(f"Total number of Video Files: {len(video_files)}")

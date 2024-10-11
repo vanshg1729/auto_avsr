@@ -6,8 +6,8 @@ import math
 import numpy as np
 import copy
 
-data_dir = "/ssd_scratch/cvit/vanshg/datasets/accented_speakers"
-speaker_name = "diane_jennings"
+data_dir = "/ssd_scratch/cvit/vanshg/datasets/deaf-youtube"
+speaker_name = "deafdaydreamer"
 speaker_dir = os.path.join(data_dir, f"{speaker_name}")
 
 label_filepath = os.path.join(speaker_dir, f"all_labels.txt")

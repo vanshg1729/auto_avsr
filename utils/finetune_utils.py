@@ -45,6 +45,26 @@ def unfreeze_encoders_feed_forward(model):
             if 'feed_forward' in name:
                 param.requires_grad_(True)
 
+def unfreeze_encoders_conv_module(model):
+    num_blocks = len(model.encoder.encoders)
+    for i in range(0, num_blocks):
+        for name, param in model.encoder.encoders[i].named_parameters():
+            if 'conv_module' in name:
+                param.requires_grad_(True)
+
+def unfreeze_encoders_self_attn(model):
+    num_blocks = len(model.encoder.encoders)
+    for i in range(0, num_blocks):
+        for name, param in model.encoder.encoders[i].named_parameters():
+            if 'self_attn' in name:
+                param.requires_grad_(True)
+
+def unfreeze_encoders_middle_six_conv_module(model):
+    for i in range(3, 9):
+        for name, param in model.encoder.encoders[i].named_parameters():
+            if 'conv_module' in name:
+                param.requires_grad_(True)
+
 def unfreeze_encoders_layer3_4(model):
     for i in range(3, 5):
         for param in model.encoder.encoders[i].parameters():
@@ -117,6 +137,18 @@ def finetune_encoders_feed_forward(model):
     model.requires_grad_(False)
     unfreeze_encoders_feed_forward(model)
 
+def finetune_encoders_conv_module(model):
+    model.requires_grad_(False)
+    unfreeze_encoders_conv_module(model)
+
+def finetune_encoders_middle_six_conv_module(model):
+    model.requires_grad_(False)
+    unfreeze_encoders_middle_six_conv_module(model)
+
+def finetune_encoders_self_attn(model):
+    model.requires_grad_(False)
+    unfreeze_encoders_self_attn(model)
+
 def finetune_encoders_layer3_4(model):
     model.requires_grad_(False)
     unfreeze_encoders_layer3_4(model)
@@ -142,5 +174,8 @@ finetune_funcs = {
     'encoders_layer5_6': finetune_encoders_layer5_6,
     'encoders_layer7_8': finetune_encoders_layer7_8,
     'encoders_feed_forward': finetune_encoders_feed_forward,
+    'encoders_conv_module': finetune_encoders_conv_module,
+    'encoders_self_attn': finetune_encoders_self_attn,
+    'encoders_middle_six_conv_module': finetune_encoders_middle_six_conv_module,
     "ctc": finetune_ctc,
 }

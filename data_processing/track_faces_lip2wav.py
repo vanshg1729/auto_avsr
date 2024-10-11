@@ -50,13 +50,13 @@ parser.add_argument(
 parser.add_argument(
     '--ngpu',
     help='Number of GPUs across which to run in parallel',
-    default=3,
+    default=4,
     type=int
 )
 parser.add_argument(
     "--job-index",
     type=int,
-    default=2,
+    default=3,
     help="Index to identify separate jobs (useful for parallel processing).",
 )
 parser.add_argument(
@@ -225,12 +225,12 @@ def mp_handler(job):
         exit(0)
 
 def main(args):
-    # video_ids_file = os.path.join(src_speaker_dir, "all_video_ids.txt")
-    # video_ids = open(video_ids_file, 'r').read().split()
-    # print(f"{video_ids = }")
-    # video_files = [os.path.join(src_vid_dir, f"{video_id}.mkv") for video_id in video_ids]
+    video_ids_file = os.path.join(src_speaker_dir, "new_video_ids.txt")
+    video_ids = open(video_ids_file, 'r').read().split()
+    print(f"{video_ids = }")
+    video_files = [os.path.join(src_vid_dir, f"{video_id}.mkv") for video_id in video_ids]
 
-    video_files = glob.glob(os.path.join(src_vid_dir, "*.mkv"))
+    # video_files = glob.glob(os.path.join(src_vid_dir, "*.mkv"))
     # video_files = [os.path.join(src_vid_dir, "3ph5hPsxdt0.mkv")]
     video_files = sorted(video_files)
     print(f"Total number of Video Files: {len(video_files)}")

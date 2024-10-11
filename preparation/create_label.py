@@ -14,12 +14,12 @@ from tqdm import tqdm
 from transforms import TextTransform
 from utils import save_vid_aud_txt, split_file
 
-data_dir = "/ssd_scratch/cvit/vanshg/datasets/accented_speakers"
-speaker_name = "diane_jennings"
+data_dir = "/ssd_scratch/cvit/vanshg/datasets/deaf-youtube"
+speaker_name = "deafdaydreamer"
 
 src_speaker_dir = os.path.join(data_dir, f"{speaker_name}")
-src_video_dir = os.path.join(src_speaker_dir, f"processed_videos")
-src_text_dir = os.path.join(src_speaker_dir, f"transcriptions")
+src_video_dir = os.path.join(src_speaker_dir, f"filtered_processed_videos")
+src_text_dir = os.path.join(src_speaker_dir, f"filtered_transcriptions")
 
 print(f"SRC Speaker DIR: {src_speaker_dir}, {os.path.exists(src_speaker_dir)}")
 print(f"SRC Video DIR: {src_video_dir}, {os.path.exists(src_video_dir)}")

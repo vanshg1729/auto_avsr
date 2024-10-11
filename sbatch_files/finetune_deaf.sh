@@ -1,7 +1,7 @@
 #!/bin/bash
 
-#SBATCH -A vanshg
-#SBATCH --nodelist=gnode092
+#SBATCH -A research
+#SBATCH --nodelist=gnode086
 #SBATCH --gres=gpu:4
 #SBATCH --mem-per-cpu=2G
 #SBATCH -c 36
