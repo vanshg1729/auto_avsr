@@ -18,7 +18,7 @@ def main(cfg):
 
     print(f"Inside main() function")
 
-    speaker = "cochlear_kaz"
+    speaker = "deafdaydreamer"
     project_name = f"{speaker}_inference"
     # run_name = "chem_encoder_finetuning_const_lr0.0001_wd0.5_win20_stride25"
     beam_size = cfg.decode.beam_size

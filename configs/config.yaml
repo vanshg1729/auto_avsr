@@ -27,5 +27,5 @@ wandb: True
 train_size: 0.7
 logging_dir: /ssd_scratch/cvit/vanshg/
 log_folder:
-speaker: cochlear_kaz
+speaker: deafdaydreamer
 finetune: encoder
