@@ -1,6 +1,7 @@
 import os
 import csv
 import numpy as np
+import socket
 
 import torch
 from torch.optim.lr_scheduler import StepLR
@@ -88,6 +89,12 @@ class ModelModule(LightningModule):
             self.train_epoch_st = 0
             self.train_epoch_time = 0
             self.epoch_time_meter = AverageMeter()
+            self.best_val_epoch = 0
+            self.val_wer_best_val_epoch = 100
+            self.test_wer_best_val_epoch = 100
+            self.best_test_epoch = 0
+            self.val_wer_best_test_epoch = 100
+            self.best_test_wer = 100
 
     def configure_optimizers(self):
         optimizer = torch.optim.AdamW([{"name": "model", "params": self.model.parameters(), "lr": self.cfg.optimizer.lr}], weight_decay=self.cfg.optimizer.weight_decay, betas=(0.9, 0.98))
@@ -437,11 +444,11 @@ class ModelModule(LightningModule):
     def on_validation_epoch_end(self) -> None:
         # Gathering the values across GPUs
         # sizes = (W, V)
-        self.val_loss = self.all_gather(self.val_loss, sync_grads=False).sum(dim=0) # (V, )
-        self.val_loss_ctc = self.all_gather(self.val_loss_ctc, sync_grads=False).sum(dim=0) # (V, )
-        self.val_loss_att = self.all_gather(self.val_loss_att, sync_grads=False).sum(dim=0) # (V, )
-        self.val_acc = self.all_gather(self.val_acc, sync_grads=False).sum(dim=0) # (V, )
-        self.val_epoch_size = self.all_gather(self.val_epoch_size, sync_grads=False).sum(dim=0) # (V, )
+        self.val_loss = torch.atleast_1d(self.all_gather(self.val_loss, sync_grads=False).sum(dim=0)) # (V, )
+        self.val_loss_ctc = torch.atleast_1d(self.all_gather(self.val_loss_ctc, sync_grads=False).sum(dim=0)) # (V, )
+        self.val_loss_att = torch.atleast_1d(self.all_gather(self.val_loss_att, sync_grads=False).sum(dim=0)) # (V, )
+        self.val_acc = torch.atleast_1d(self.all_gather(self.val_acc, sync_grads=False).sum(dim=0)) # (V, )
+        self.val_epoch_size = torch.atleast_1d(self.all_gather(self.val_epoch_size, sync_grads=False).sum(dim=0)) # (V, )
 
         # Logging from process with global rank = 0
         if self.global_rank == 0:
@@ -460,6 +467,8 @@ class ModelModule(LightningModule):
                 self.log_dict(log_dict, logger=True)
                 print_stats(log_dict)
 
+        cur_test_wer = 100
+        cur_val_wer = 100
         # Loop over the results of all the different validation loaders
         for idx in range(self.num_val_loaders):
             # Only do logging from Global Rank = 0 process
@@ -468,15 +477,17 @@ class ModelModule(LightningModule):
                 log_dict = {'epoch': self.current_epoch}
                 if idx == 0:
                     log_dict['wer_test_epoch'] = wer
+                    cur_test_wer = wer
                 else:
                     log_dict[f"wer_val{idx}_epoch"] = wer
+                    cur_val_wer = wer
 
                 if self.cfg.wandb:
                     wandb.log(log_dict)
                 else:
                     self.log_dict(log_dict, logger=True)
                 print_stats(log_dict)
-
+        
             # Write the csv results file for the corresponding val dataloader
             if self.loggers and self.result_data[idx]:
                 with open(self.results_filepaths[idx], mode='a') as file:
@@ -484,7 +495,65 @@ class ModelModule(LightningModule):
                     writer.writerows(self.result_data[idx])
                     print(f"{self.current_epoch = } Successfully written the results data at {self.results_filepaths[idx]}")
 
+        # update best Test Epoch
+        if cur_test_wer < self.best_test_wer:
+            print(f"{cur_test_wer = }")
+            self.best_test_wer = cur_test_wer
+            self.best_test_epoch = self.current_epoch
+            self.val_wer_best_test_epoch = cur_val_wer
+        elif cur_test_wer == self.best_test_wer and cur_val_wer < self.val_wer_best_test_epoch:
+            self.best_test_wer = cur_test_wer
+            self.best_test_epoch = self.current_epoch
+            self.val_wer_best_test_epoch = cur_val_wer
+
+
+        # Update best Val Epoch
+        if cur_val_wer < self.val_wer_best_val_epoch:
+            print(f"{cur_val_wer = }")
+            self.val_wer_best_val_epoch = cur_val_wer
+            self.best_val_epoch = self.current_epoch
+            self.test_wer_best_val_epoch = cur_test_wer
+        elif cur_val_wer == self.val_wer_best_val_epoch and cur_test_wer < self.test_wer_best_val_epoch:
+            self.val_wer_best_val_epoch = cur_val_wer
+            self.best_val_epoch = self.current_epoch
+            self.test_wer_best_val_epoch = cur_test_wer
+
+
         return super().on_validation_epoch_end()
+    
+    def on_train_end(self):
+        if self.global_rank == 0:
+            wandb_id = ""
+            wandb_url = ""
+            wandb_run_name = ""
+            hostname = socket.gethostname()
+            if self.cfg.wandb:
+                wandb_id = wandb.run.id
+                wandb_run_name = wandb.run.name
+                wandb_url = wandb.run.get_url()
+            
+            results_filepath = "./results/accented_new_speakers_results.csv"
+            # results_filepath = "./temp.csv"
+            result = [
+                self.cfg.speaker,
+                self.cfg.finetune,
+                hostname, 
+                wandb_id,
+                wandb_run_name,
+                wandb_url,
+                self.best_val_epoch,
+                self.val_wer_best_val_epoch,
+                self.test_wer_best_val_epoch,
+                self.best_test_epoch,
+                self.val_wer_best_test_epoch,
+                self.best_test_wer]
+
+            # appending the results
+            with open(results_filepath, mode='a') as file:
+                writer = csv.writer(file, delimiter=',')
+                writer.writerow(result)
+                print(f"WROTE THE FINAL results to {results_filepath}: \n{result = }")
+        
 
     def on_test_epoch_start(self):
         self.total_length = 0

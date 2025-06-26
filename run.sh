@@ -41,20 +41,30 @@ python finetune_deaf.py exp_dir=/ssd_scratch/cvit/vanshg/deaf_youtube_exp \
 python inference.py data.modality=video \
                data.dataset.root_dir=/ssd_scratch/cvit/vanshg/datasets/deaf-youtube/ \
                data.dataset.test_file=/ssd_scratch/cvit/vanshg/datasets/deaf-youtube/mia_sandra/all_labels.txt \
-               pretrained_model_path=./checkpoints/lrs3/models/LRS3_V_WER19.1/model.pth
+               pretrained_model_path=/ssd_scratch/cvit/akshat/checkpoints/lrs3/models/LRS3_V_WER19.1/model.pth
 
 # For Accented Dataset
-python inference.py data.modality=video \
-               data.dataset.root_dir=/ssd_scratch/cvit/vanshg/datasets/accented_speakers \
-               data.dataset.test_file=/ssd_scratch/cvit/vanshg/datasets/accented_speakers/daniel_howell/train_reduced_labels.txt \
-               pretrained_model_path=./checkpoints/lrs3/models/LRS3_V_WER19.1/model.pth
+WANDB_API_KEY=8c09025842609f9e17e5aa0de5aa2ab26314a316 python inference.py data.modality=video \
+               data.dataset.root_dir=/ssd_scratch/cvit/akshat/datasets/accented_speakers \
+               data.dataset.test_file=/ssd_scratch/cvit/akshat/datasets/accented_speakers/supersymo/val_reduced_labels.txt \
+               pretrained_model_path=/ssd_scratch/cvit/akshat/checkpoints/lrs3/models/LRS3_V_WER19.1/model.pth
 
-python finetune_deaf.py data.modality=video \
-               data.dataset.root_dir=/ssd_scratch/cvit/vanshg/datasets/accented_speakers \
-               data.dataset.train_file=/ssd_scratch/cvit/vanshg/datasets/accented_speakers/jack/train_reduced_labels.txt \
-               data.dataset.val_file=/ssd_scratch/cvit/vanshg/datasets/accented_speakers/jack/val_reduced_labels.txt \
-               data.dataset.test_file=/ssd_scratch/cvit/vanshg/datasets/accented_speakers/jack/test_reduced_labels.txt \
-               pretrained_model_path=./checkpoints/lrs3/models/LRS3_V_WER19.1/model.pth
+WANDB_API_KEY=8c09025842609f9e17e5aa0de5aa2ab26314a316 python finetune_deaf.py data.modality=video \
+               data.dataset.root_dir=/ssd_scratch/cvit/akshat/datasets/accented_speakers \
+               data.dataset.train_file=/ssd_scratch/cvit/akshat/datasets/accented_speakers/jonna_jinton/train_reduced_labels.txt \
+               data.dataset.val_file=/ssd_scratch/cvit/akshat/datasets/accented_speakers/jonna_jinton/val_reduced_labels.txt \
+               data.dataset.test_file=/ssd_scratch/cvit/akshat/datasets/accented_speakers/jonna_jinton/test_reduced_labels.txt \
+               pretrained_model_path=/ssd_scratch/cvit/akshat/checkpoints/lrs3/models/LRS3_V_WER19.1/model.pth
+
+WANDB_API_KEY=8c09025842609f9e17e5aa0de5aa2ab26314a316 python finetune_deaf.py -m data.modality=video \
+               data.dataset.root_dir=/ssd_scratch/cvit/akshat/datasets/accented_speakers \
+               data.dataset.train_file=/ssd_scratch/cvit/akshat/datasets/accented_speakers/jonna_jinton/train_reduced_labels.txt \
+               data.dataset.val_file=/ssd_scratch/cvit/akshat/datasets/accented_speakers/jonna_jinton/val_reduced_labels.txt \
+               data.dataset.test_file=/ssd_scratch/cvit/akshat/datasets/accented_speakers/jonna_jinton/test_reduced_labels.txt \
+               pretrained_model_path=/ssd_scratch/cvit/akshat/checkpoints/lrs3/models/LRS3_V_WER19.1/model.pth \
+               finetune=full,encoder,encoders,encoders_conv_module,encoders_middle_six
+
+WANDB_API_KEY=8c09025842609f9e17e5aa0de5aa2ab26314a316 python sweep_finetune_deaf.py
 
 python finetune_deaf.py data.modality=video \
                data.dataset.root_dir=/ssd_scratch/cvit/vanshg/datasets/accented_speakers \
@@ -72,9 +82,9 @@ python finetune_lip2wav.py data.modality=video \
 
 # For Lip2Wav Dataset
 python inference.py data.modality=video \
-               data.dataset.root_dir=/ssd_scratch/cvit/vanshg/datasets/lip2wav \
-               data.dataset.test_file=/ssd_scratch/cvit/vanshg/datasets/lip2wav/chem/val_reduced600_10_labels.txt \
-               pretrained_model_path=./checkpoints/lrs3/models/LRS3_V_WER19.1/model.pth
+               data.dataset.root_dir=/ssd_scratch/cvit/akshat/datasets/accented_speakers \
+               data.dataset.test_file=/ssd_scratch/cvit/akshat/datasets/accented_speakers/liam/all_labels.txt \
+               pretrained_model_path=/ssd_scratch/cvit/akshat/checkpoints/lrs3/models/LRS3_V_WER19.1/model.pth
 
 python finetune_deaf.py exp_dir=/ssd_scratch/cvit/vanshg/deaf_youtube_exp \
                data.modality=video \
@@ -92,7 +102,7 @@ python finetune_deaf.py data.modality=video \
                pretrained_model_path=./checkpoints/lrs3/models/LRS3_V_WER19.1/model.pth
 
 python inference.py data.modality=video \
-               data.dataset.root_dir=/ssd_scratch/cvit/vanshg/ \
+               data.dataset.root_dir=/ssd_scratch/cvit/akshat/ \
                data.dataset.test_file=/ssd_scratch/cvit/akshat/phrases_mead/w011/front_labels_test_random_80_e.txt \
                pretrained_model_path=./checkpoints/lrs3/models/LRS3_V_WER19.1/model.pth
 

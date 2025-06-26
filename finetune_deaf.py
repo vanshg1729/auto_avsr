@@ -18,7 +18,7 @@ def main(cfg):
 
     print(f"Inside main() function")
     speaker = cfg.speaker
-    speaker = "jack"
+    speaker = "eleanor"
     finetune_type = cfg.finetune
     print(f"{cfg.finetune = }")
     assert finetune_type in finetune_funcs.keys(), f"{finetune_type} not available"
@@ -72,18 +72,22 @@ def main(cfg):
             name=run_name,
             project=project_name,
             # config=cfg,
-            settings=wandb.Settings(code_dir='.')
+            settings=wandb.Settings(code_dir='.'),
+            resume=False
         )
+        print(f"{wandb_logger = }")
+        print(f"WANDB RUN NAME: {wandb_logger.experiment.name}")
+        print(f"WANDB RUN ID: {wandb_logger.experiment.id}")
         loggers.append(wandb_logger)
 
     # Creating the Model Object
     modelmodule = ModelModule(cfg)
     finetune_func(modelmodule.model)
     trainable_params = 0
-    for name, param in modelmodule.model.named_parameters():
-        if param.requires_grad == True:
-            print(f"{name} | {param.shape = } | {param.requires_grad = }")
-            trainable_params += param.numel()
+    # for name, param in modelmodule.model.named_parameters():
+    #     if param.requires_grad == True:
+    #         print(f"{name} | {param.shape = } | {param.requires_grad = }")
+    #         trainable_params += param.numel()
     print(f"Total trainable params: {trainable_params}")
     # freeze_frontend3D(modelmodule.model)
 
@@ -92,6 +96,8 @@ def main(cfg):
     datamodule = DataModulePhrase(cfg)
     trainer = Trainer(
         **cfg.trainer,
+        # limit_train_batches=1,
+        # limit_val_batches=1,
         strategy='ddp_find_unused_parameters_true',
         logger=loggers,
         callbacks=callbacks,
@@ -101,6 +107,8 @@ def main(cfg):
 
     # ckpt_path = "/ssd_scratch/cvit/vanshg/auto_avsr_benny_finetuning/benny_encoders_bottom_half_finetuning_const_lr0.0001_wd1.0_win15_stride25_drop0.1_beam10/lightning_logs/version_0/checkpoints/epoch=10-step=1287.ckpt"
     trainer.fit(model=modelmodule, datamodule=datamodule)
+    if cfg.wandb:
+        wandb.finish()
     # trainer.validate(model=modelmodule, verbose=True, datamodule=datamodule)
     # ensemble(cfg)
 
